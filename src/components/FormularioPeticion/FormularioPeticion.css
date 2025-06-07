@@ -1,0 +1,187 @@
+/* src/components/FormularioPeticion/FormularioPeticion.css */
+.form-peticion-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.form-title {
+  text-align: center;
+  color: #333;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+}
+
+.peticion-form .form-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Una columna por defecto */
+  gap: 1.5rem; /* Espacio entre columnas y filas */
+}
+
+/* Dos columnas para pantallas más grandes */
+@media (min-width: 768px) {
+  .peticion-form .form-grid {
+    grid-template-columns: repeat(2, 1fr); /* Dos columnas */
+  }
+}
+
+
+.form-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* Espacio entre grupos de formulario en la misma columna */
+}
+
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  margin-bottom: 0.5rem;
+  color: #555;
+  font-weight: 500;
+}
+
+.form-input,
+.form-select,
+.form-textarea,
+.form-file-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box; /* Importante para que el padding no aumente el tamaño */
+  transition: border-color 0.2s ease-in-out;
+}
+
+.form-input:focus,
+.form-select:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #007bff; /* Un color de resalte al enfocar */
+  box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.form-textarea {
+  resize: vertical; /* Permite redimensionar verticalmente */
+  min-height: 80px;
+}
+
+.radio-group {
+  display: flex;
+  gap: 1rem; /* Espacio entre opciones de radio */
+  align-items: center;
+  margin-top: 0.3rem;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem; /* Espacio entre el radio y su texto */
+  font-weight: normal;
+  color: #333;
+}
+
+.radio-label input[type="radio"] {
+  margin-right: 0.3rem; /* Espacio adicional si es necesario */
+}
+
+.file-name-display {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 0.5rem;
+}
+
+.form-actions {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.submit-button {
+  background-color: #007bff;
+  color: white;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+  display: inline-flex; /* Para alinear el spinner y el texto */
+  align-items: center;
+  justify-content: center;
+}
+
+.submit-button:hover {
+  background-color: #0056b3;
+}
+
+.submit-button:disabled {
+  background-color: #a0cfff;
+  cursor: not-allowed;
+}
+
+.submit-button:active {
+    transform: scale(0.98);
+}
+
+/* Estilos del Spinner */
+.spinner-icon {
+  animation: rotate 1s linear infinite;
+  width: 1.2em; /* Ajusta el tamaño según sea necesario */
+  height: 1.2em;
+  margin-right: 0.5em; /* Espacio entre el spinner y el texto */
+}
+
+.spinner-icon .path {
+  stroke: currentColor; /* Usa el color del texto del botón */
+  stroke-linecap: round;
+  animation: dash 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes dash {
+  0% {
+    stroke-dasharray: 1, 150;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -35;
+  }
+  100% {
+    stroke-dasharray: 90, 150;
+    stroke-dashoffset: -124;
+  }
+}
+
+/* Mensajes de éxito/error */
+.message-display {
+  padding: 0.8rem 1rem;
+  margin-top: 1.5rem;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.message-display.success {
+  background-color: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.message-display.error {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}

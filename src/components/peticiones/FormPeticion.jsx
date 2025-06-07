@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { db, storage } from '../../services/firebase';
+import { db, storage } from '../../services/firebase'; // Asegúrate que esta ruta es correcta
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import './FormPeticion.css';
@@ -9,8 +9,8 @@ export default function FormPeticion() {
     nombre: '',
     telefono: '',
     localidad: '',
-    estructura: 'no', // 'si' o 'no'
-    origenReporte: '', // Red social/anuncio
+    estructura: 'no',
+    origenReporte: '',
     peticion: '',
     hora: ''
   });
@@ -18,32 +18,45 @@ export default function FormPeticion() {
   const [loading, setLoading] = useState(false);
   const [mensaje, setMensaje] = useState('');
 
-  // Opciones para los select
   const localidades = ['Centro', 'Norte', 'Sur', 'Oriente', 'Poniente'];
   const origenes = ['Facebook', 'Twitter', 'WhatsApp', 'Anuncio impreso', 'Recomendación'];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setMensaje(''); // Limpiar mensajes previos
+
+    console.log("Iniciando envío de formulario...");
+    console.log("Datos del formulario:", form);
+    if (ineFile) {
+      console.log("Archivo INE seleccionado:", ineFile.name);
+    } else {
+      console.log("No se seleccionó archivo INE.");
+    }
 
     try {
-      // 1. Subir INE a Storage
       let ineUrl = '';
       if (ineFile) {
+        console.log("Subiendo INE a Storage...");
         const ineRef = ref(storage, `ines/${Date.now()}_${ineFile.name}`);
         await uploadBytes(ineRef, ineFile);
         ineUrl = await getDownloadURL(ineRef);
+        console.log("INE subido exitosamente. URL:", ineUrl);
       }
 
-      // 2. Guardar en Firestore
-      await addDoc(collection(db, 'peticiones'), {
+      const peticionData = {
         ...form,
-        ineUrl,
-        fecha: serverTimestamp(), // Guarda fecha automática
+        ineUrl, // Será string vacío si no hay archivo
+        fecha: serverTimestamp(),
         estado: 'pendiente'
-      });
+      };
 
-      setMensaje('¡Petición registrada!');
+      console.log("Guardando datos en Firestore:", peticionData);
+      await addDoc(collection(db, 'peticiones'), peticionData);
+      console.log("¡Petición registrada en Firestore!");
+
+      setMensaje('¡Listo!'); // Mensaje de éxito
+
       // Resetear formulario
       setForm({
         nombre: '',
@@ -55,10 +68,26 @@ export default function FormPeticion() {
         hora: ''
       });
       setIneFile(null);
+      // Para limpiar el input de archivo visualmente
+      const ineFileInput = document.getElementById('ine-file-input');
+      if (ineFileInput) {
+        ineFileInput.value = '';
+      }
+
     } catch (error) {
-      setMensaje(`Error: ${error.message}`);
+      console.error("Error durante el envío:", error); // ¡MUY IMPORTANTE! Revisa este error en la consola
+      let friendlyErrorMessage = `Error: ${error.message}`;
+      if (error.code) {
+        friendlyErrorMessage = `Error (${error.code}): ${error.message}`;
+        if (error.code === 'permission-denied') {
+          friendlyErrorMessage = "Error de permiso: La base de datos denegó la escritura. Revisa tus Reglas de Seguridad en Firebase.";
+          console.error("Detalle del error de permiso:", error);
+        }
+      }
+      setMensaje(friendlyErrorMessage);
     } finally {
       setLoading(false);
+      console.log("Envío de formulario finalizado.");
     }
   };
 
@@ -148,8 +177,9 @@ export default function FormPeticion() {
 
         {/* INE (File Input) */}
         <div className="file-input">
-          <label>INE/Identificación:</label>
+          <label htmlFor="ine-file-input">INE/Identificación:</label> {/* Añadido htmlFor */}
           <input
+            id="ine-file-input" // Añadido ID para poder resetearlo
             type="file"
             onChange={(e) => setIneFile(e.target.files[0])}
             accept="image/*,.pdf"
@@ -157,10 +187,21 @@ export default function FormPeticion() {
         </div>
 
         <button type="submit" disabled={loading}>
-          {loading ? 'Enviando...' : 'Registrar Petición'}
+          {loading ? (
+            <>
+              <span className="spinner"></span>
+              Enviando...
+            </>
+          ) : (
+            'Registrar Petición'
+          )}
         </button>
 
-        {mensaje && <p className={`mensaje ${mensaje.includes('Error') ? 'error' : 'exito'}`}>{mensaje}</p>}
+        {mensaje && (
+          <p className={`mensaje ${mensaje.toLowerCase().includes('error') ? 'error' : 'exito'}`}>
+            {mensaje}
+          </p>
+        )}
       </form>
     </div>
   );
