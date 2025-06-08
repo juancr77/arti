@@ -1,43 +1,26 @@
 // src/App.js
 
-import React, { useState } from 'react';
-// CORRECCIÓN DE RUTA: Se ha ajustado la ruta para reflejar la estructura de carpetas.
-// Asume que App.js está en /src y el componente está en /src/components/FormularioPeticion/
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+
+// CORRECCIÓN DE RUTAS:
+// Se ajustan las rutas para que apunten correctamente a la carpeta 'components'
+// desde el archivo App.js que está en la raíz de 'src'. Se añade la extensión .js
+// para ser más explícitos con el sistema de importación.
+import HomePage from './components/HomePage.js'; 
 import FormularioPeticion from './components/FormularioPeticion/FormularioPeticion.js';
-import './App.css'; // Estilos para el menú y la app en general
 
-// Componente del Menú Principal
-const HomePage = ({ onNavigateToForm }) => {
-  return (
-    <div className="home-menu-container">
-      <div className="home-menu-content">
-        <h1 className="home-menu-title">Sistema de Gestión</h1>
-        <p className="home-menu-subtitle">Bienvenido. Selecciona una opción para comenzar.</p>
-        <button onClick={onNavigateToForm} className="home-menu-button">
-          Generar Nuevo Reporte
-        </button>
-      </div>
-    </div>
-  );
-};
+// Se asume que App.css está en la misma carpeta que App.js (src)
+import './App.css'; 
 
-
-// Controlador principal de la aplicación
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('home'); // 'home' o 'form'
-
-  const navigateToForm = () => {
-    setCurrentPage('form');
-  };
-
-  const navigateToHome = () => {
-    setCurrentPage('home');
-  };
-
   return (
-    <div className="main-app-container">
-      {currentPage === 'home' && <HomePage onNavigateToForm={navigateToForm} />}
-      {currentPage === 'form' && <FormularioPeticion onNavigateHome={navigateToHome} />}
-    </div>
+    <Routes>
+      {/* Ruta para la página principal (el menú) */}
+      <Route path="/" element={<HomePage />} />
+
+      {/* Ruta para el formulario de nuevo reporte */}
+      <Route path="/nuevo-reporte" element={<FormularioPeticion />} />
+    </Routes>
   );
 }
