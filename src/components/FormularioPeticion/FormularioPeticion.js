@@ -136,7 +136,7 @@ export default function App() {
       }
 
       await addDoc(collection(db, 'peticiones'), peticionParaGuardar);
-      setMessage({ type: 'success', text: '¡Listo! Petición registrada exitosamente.' });
+      setMessage({ type: 'success', text: '¡Listo! el reporte se a registrado exitosamente.' });
       setFormData({
         nombres: '', apellidoPaterno: '', apellidoMaterno: '', telefono: '',
         localidad: '', estructura: 'no', origenReporte: '', peticion: '', hora: '',
@@ -144,8 +144,8 @@ export default function App() {
       setIneFile(null); setIneFileName('');
       if (document.getElementById('ineFile')) document.getElementById('ineFile').value = null;
     } catch (error) {
-      console.error("Error al registrar la petición: ", error);
-      setMessage({ type: 'error', text: 'Ocurrió un error al registrar la petición.' });
+      console.error("Error al registrar el Reporte: ", error);
+      setMessage({ type: 'error', text: 'Ocurrió un error al registrar el reporte.' });
     } finally {
       setIsLoading(false);
     }
@@ -235,7 +235,7 @@ export default function App() {
       `}</style>
       
       <div className="form-peticion-container">
-        <h2 className="form-title">Registrar Nueva Petición</h2>
+        <h2 className="form-title">Registrar un Nuevo Reporte</h2>
         <form onSubmit={handleSubmit} className="peticion-form" autoComplete="off">
           <div className="form-grid">
             <div className="form-column">
@@ -248,8 +248,8 @@ export default function App() {
                 <input type="text" id="apellidoPaterno" name="apellidoPaterno" value={formData.apellidoPaterno} onChange={handleChange} placeholder="Ej: Pérez" required className="form-input" />
               </div>
               <div className="form-group">
-                <label htmlFor="apellidoMaterno">Apellido Materno</label>
-                <input type="text" id="apellidoMaterno" name="apellidoMaterno" value={formData.apellidoMaterno} onChange={handleChange} placeholder="Ej: García (opcional)" className="form-input" />
+                <label htmlFor="apellidoMaterno">Apellido Materno*</label>
+                <input type="text" id="apellidoMaterno" name="apellidoMaterno" value={formData.apellidoMaterno} onChange={handleChange} placeholder="Ej: García" className="form-input" />
               </div>
               <div className="form-group">
                 <label htmlFor="telefono">Teléfono*</label>
@@ -298,7 +298,7 @@ export default function App() {
               </div>
               
                <div className="form-group">
-                <label>¿Es parte de una estructura existente?</label>
+                <label>¿Es referente a una Estructura?</label>
                 <div className="radio-group">
                   <label className="radio-label"><input type="radio" name="estructura" value="si" checked={formData.estructura === 'si'} onChange={handleChange} /> Sí</label>
                   <label className="radio-label"><input type="radio" name="estructura" value="no" checked={formData.estructura === 'no'} onChange={handleChange} /> No</label>
@@ -307,19 +307,19 @@ export default function App() {
               <div className="form-group">
                 <label htmlFor="origenReporte">Origen del Reporte/Petición</label>
                 <select id="origenReporte" name="origenReporte" value={formData.origenReporte} onChange={handleChange} className="form-select">
-                  <option value="">-- ¿Cómo se enteró? --</option>
+                  <option value="">-- ¿Por que medio Reporto? --</option>
                   {['Red Social', 'WhatsApp', 'Recomendación', 'Otro'].map(origen => <option key={origen} value={origen}>{origen}</option>)}
                 </select>
               </div>
               <div className="form-group">
-                <label htmlFor="hora">Hora de la Petición*</label>
+                <label htmlFor="hora">Hora de la Registro*</label>
                 <input type="time" id="hora" name="hora" value={formData.hora} onChange={handleChange} required className="form-input" />
               </div>
             </div>
           </div>
 
            <div className="form-group full-width-group">
-            <label htmlFor="peticion">Descripción de la Petición*</label>
+            <label htmlFor="peticion">Descripción del Reporte*</label>
             <textarea id="peticion" name="peticion" value={formData.peticion} onChange={handleChange} placeholder="Detalla aquí la solicitud o reporte..." rows="4" required className="form-textarea" />
           </div>
           <div className="form-group full-width-group">
@@ -329,7 +329,7 @@ export default function App() {
           </div>
           <div className="form-actions">
             <button type="submit" disabled={isLoading} className="submit-button">
-              {isLoading ? (<><SpinnerIcon />Enviando...</>) : ('Registrar Petición')}
+              {isLoading ? (<><SpinnerIcon />Enviando...</>) : ('Registrar Reporte')}
             </button>
           </div>
           {message.text && (<div className={`message-display ${message.type}`}>{message.text}</div>)}
