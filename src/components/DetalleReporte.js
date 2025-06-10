@@ -76,14 +76,13 @@ export default function DetalleReporte() {
     }
   };
 
-  // --- NUEVA FUNCIÓN PARA ELIMINAR ---
   const handleDelete = async () => {
     if (window.confirm("¿Estás seguro de que quieres eliminar este reporte? Esta acción es irreversible.")) {
       try {
         const docRef = doc(db, 'peticiones', reporteId);
         await deleteDoc(docRef);
         alert("Reporte eliminado con éxito.");
-        navigate('/ver-reportes'); // Redirige a la lista después de borrar
+        navigate('/ver-reportes');
       } catch (error) {
         console.error("Error al eliminar el documento: ", error);
         alert("Ocurrió un error al eliminar el reporte.");
@@ -109,8 +108,9 @@ export default function DetalleReporte() {
         .form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; }
         .submit-button, .delete-button { padding: 0.7rem 1.5rem; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; }
         .submit-button { background-color: #007bff; color: white; }
-        .delete-button { background-color: #d9534f; color: white; } /* Estilo para el botón de eliminar */
-        .report-image { max-width: 100%; border-radius: 8px; margin-top: 2rem; border: 1px solid #ddd; }
+        .delete-button { background-color: #d9534f; color: white; }
+        .report-image { max-width: 100%; border-radius: 8px; margin-top: 1rem; border: 1px solid #ddd; }
+        .image-section { margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; }
       `}</style>
       <div className="detalle-container">
         <div className="detalle-header">
@@ -164,20 +164,19 @@ export default function DetalleReporte() {
             <textarea id="peticion" name="peticion" value={formData.peticion} onChange={handleChange} className="form-textarea" />
           </div>
           
+          {/* --- IMAGEN Y ACCIONES AHORA DENTRO Y AL FINAL DEL FORMULARIO --- */}
+          {reporte?.ineURL && (
+            <div className="image-section">
+                <h3>Identificación Adjunta</h3>
+                <img src={reporte.ineURL} alt="Identificación" className="report-image" />
+            </div>
+          )}
+
           <div className="form-actions">
-            {/* --- BOTÓN DE ELIMINAR AÑADIDO --- */}
             <button type="button" onClick={handleDelete} className="delete-button">Eliminar Reporte</button>
             <button type="submit" className="submit-button">Guardar Cambios</button>
           </div>
         </form>
-
-        {/* --- IMAGEN MOVIDA AQUÍ, AL FINAL --- */}
-        {reporte?.ineURL && (
-            <div>
-                <h3 style={{marginTop: '2rem', borderTop: '1px solid #eee', paddingTop: '1.5rem'}}>Identificación Adjunta</h3>
-                <img src={reporte.ineURL} alt="Identificación" className="report-image" />
-            </div>
-        )}
       </div>
     </>
   );
