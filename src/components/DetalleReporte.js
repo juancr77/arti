@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { db } from '../services/firebase';
-import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 
 export default function DetalleReporte() {
   const { reporteId } = useParams();
@@ -22,7 +22,6 @@ export default function DetalleReporte() {
   });
   const [isLoading, setIsLoading] = useState(true);
 
-  // --- OBTENER DATOS DEL REPORTE ESPECÍFICO ---
   useEffect(() => {
     const fetchReporte = async () => {
       try {
@@ -32,7 +31,6 @@ export default function DetalleReporte() {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setReporte(data);
-          // Pre-llenamos el formulario con todos los datos existentes
           setFormData({
             nombres: data.nombres || '',
             apellidoPaterno: data.apellidoPaterno || '',
@@ -45,7 +43,6 @@ export default function DetalleReporte() {
             hora: data.hora || ''
           });
         } else {
-          console.log("No se encontró el documento.");
           setReporte(false);
         }
       } catch (error) {
@@ -54,11 +51,9 @@ export default function DetalleReporte() {
         setIsLoading(false);
       }
     };
-
     fetchReporte();
   }, [reporteId]);
 
-  // --- MANEJADORES DEL FORMULARIO ---
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({ ...prevData, [name]: value }));
@@ -67,21 +62,32 @@ export default function DetalleReporte() {
   const handleUpdate = async (e) => {
     e.preventDefault();
     const docRef = doc(db, 'peticiones', reporteId);
-    
     try {
-      // Preparamos los datos para actualizar, convirtiendo la fecha de vuelta a Timestamp
       const datosActualizados = {
         ...formData,
         fecha: Timestamp.fromDate(new Date(`${formData.fecha}T${formData.hora || '00:00:00'}`))
       };
-
       await updateDoc(docRef, datosActualizados);
-      
       alert("¡Reporte actualizado con éxito!");
       navigate('/ver-reportes');
     } catch (error) {
       console.error("Error al actualizar el documento: ", error);
       alert("Ocurrió un error al actualizar.");
+    }
+  };
+
+  // --- NUEVA FUNCIÓN PARA ELIMINAR ---
+  const handleDelete = async () => {
+    if (window.confirm("¿Estás seguro de que quieres eliminar este reporte? Esta acción es irreversible.")) {
+      try {
+        const docRef = doc(db, 'peticiones', reporteId);
+        await deleteDoc(docRef);
+        alert("Reporte eliminado con éxito.");
+        navigate('/ver-reportes'); // Redirige a la lista después de borrar
+      } catch (error) {
+        console.error("Error al eliminar el documento: ", error);
+        alert("Ocurrió un error al eliminar el reporte.");
+      }
     }
   };
 
@@ -92,8 +98,8 @@ export default function DetalleReporte() {
     <>
       <style>{`
         .detalle-container { max-width: 800px; margin: 2rem auto; padding: 2rem; background-color: #f9f9f9; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .detalle-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 1rem; margin-bottom: 1rem; }
-        .edit-form { display: flex; flex-direction: column; gap: 1.25rem; margin-top: 2rem; }
+        .detalle-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 1rem; margin-bottom: 2rem; }
+        .edit-form { display: flex; flex-direction: column; gap: 1.25rem; }
         .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
         .form-group { display: flex; flex-direction: column; }
         .full-width { grid-column: 1 / -1; }
@@ -101,7 +107,10 @@ export default function DetalleReporte() {
         .form-input, .form-textarea, .form-select { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
         .form-textarea { resize: vertical; min-height: 120px; }
         .form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; }
-        .submit-button { padding: 0.7rem 1.5rem; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; background-color: #007bff; color: white; }
+        .submit-button, .delete-button { padding: 0.7rem 1.5rem; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; }
+        .submit-button { background-color: #007bff; color: white; }
+        .delete-button { background-color: #d9534f; color: white; } /* Estilo para el botón de eliminar */
+        .report-image { max-width: 100%; border-radius: 8px; margin-top: 2rem; border: 1px solid #ddd; }
       `}</style>
       <div className="detalle-container">
         <div className="detalle-header">
@@ -109,11 +118,8 @@ export default function DetalleReporte() {
           <Link to="/ver-reportes" className="back-link">← Volver</Link>
         </div>
         
-        {reporte?.ineURL && <img src={reporte.ineURL} alt="Identificación" style={{maxWidth: '100%', borderRadius: '8px', marginBottom: '2rem'}} />}
-
         <form onSubmit={handleUpdate} className="edit-form">
           <div className="form-grid">
-            {/* --- NUEVOS CAMPOS --- */}
             <div className="form-group">
               <label htmlFor="nombres">Nombre(s)</label>
               <input type="text" id="nombres" name="nombres" value={formData.nombres} onChange={handleChange} className="form-input" />
@@ -151,7 +157,6 @@ export default function DetalleReporte() {
               <label htmlFor="hora">Hora</label>
               <input type="time" id="hora" name="hora" value={formData.hora} onChange={handleChange} className="form-input" />
             </div>
-            {/* --- FIN DE NUEVOS CAMPOS --- */}
           </div>
           
           <div className="form-group full-width">
@@ -160,9 +165,19 @@ export default function DetalleReporte() {
           </div>
           
           <div className="form-actions">
+            {/* --- BOTÓN DE ELIMINAR AÑADIDO --- */}
+            <button type="button" onClick={handleDelete} className="delete-button">Eliminar Reporte</button>
             <button type="submit" className="submit-button">Guardar Cambios</button>
           </div>
         </form>
+
+        {/* --- IMAGEN MOVIDA AQUÍ, AL FINAL --- */}
+        {reporte?.ineURL && (
+            <div>
+                <h3 style={{marginTop: '2rem', borderTop: '1px solid #eee', paddingTop: '1.5rem'}}>Identificación Adjunta</h3>
+                <img src={reporte.ineURL} alt="Identificación" className="report-image" />
+            </div>
+        )}
       </div>
     </>
   );
