@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom'; // <-- 1. SE AÑADE LINK PARA NAVEGACIÓN
 
-// Importaciones de Firebase
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+// Importaciones de Firebase desde tu archivo centralizado
+import { db, storage } from '../../services/firebase'; // <-- Usando tu archivo centralizado
+import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // --- Icono de Spinner (SVG simple) ---
 const SpinnerIcon = () => (
@@ -12,23 +13,8 @@ const SpinnerIcon = () => (
   </svg>
 );
 
-// --- Configuración e Inicialización de Firebase ---
-const firebaseConfig = {
-  apiKey: "AIzaSyDqRhkctzLU7t-mrQj__i9HfkV9fWKPCmM",
-  authDomain: "peticionesa-44953.firebaseapp.com",
-  projectId: "peticionesa-44953",
-  storageBucket: "peticionesa-44953.firebasestorage.app",
-  messagingSenderId: "682047899464",
-  appId: "1:682047899464:web:77f06f7d5299762947157d",
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const storage = getStorage(app);
-
-
-// --- Componente Principal y Unificado ---
-export default function App() {
+// --- Componente con el nombre correcto ---
+export default function FormularioPeticion() {
   
   // --- ESTADO DEL FORMULARIO ---
   const [formData, setFormData] = useState({
@@ -97,7 +83,6 @@ export default function App() {
     else { setIneFile(null); setIneFileName(''); }
   };
   
-  // Cuando se selecciona una localidad de la lista
   const handleLocalidadSelect = (selectedLocalidad) => {
     setFormData(prevData => ({ ...prevData, localidad: selectedLocalidad }));
     setIsLocalidadListOpen(false); // Cerramos la lista
@@ -123,9 +108,18 @@ export default function App() {
       const localidadFinal = formData.localidad.trim();
       
       const peticionParaGuardar = {
-        nombres: formData.nombres, apellidoPaterno: formData.apellidoPaterno, apellidoMaterno: formData.apellidoMaterno,
-        telefono: formData.telefono, localidad: localidadFinal, estructura: formData.estructura, origenReporte: formData.origenReporte,
-        peticion: formData.peticion, hora: formData.hora, ineURL: ineURL, fecha: serverTimestamp(), estatus: 'pendiente', 
+        nombres: formData.nombres,
+        apellidoPaterno: formData.apellidoPaterno,
+        apellidoMaterno: formData.apellidoMaterno,
+        telefono: formData.telefono,
+        localidad: localidadFinal,
+        estructura: formData.estructura,
+        origenReporte: formData.origenReporte,
+        peticion: formData.peticion,
+        hora: formData.hora,
+        ineURL: ineURL,
+        fecha: serverTimestamp(),
+        estatus: 'pendiente', 
       };
       
       if (localidadFinal) {
@@ -136,7 +130,7 @@ export default function App() {
       }
 
       await addDoc(collection(db, 'peticiones'), peticionParaGuardar);
-      setMessage({ type: 'success', text: '¡Listo! el reporte se a registrado exitosamente.' });
+      setMessage({ type: 'success', text: '¡Listo! el reporte se ha registrado exitosamente.' });
       setFormData({
         nombres: '', apellidoPaterno: '', apellidoMaterno: '', telefono: '',
         localidad: '', estructura: 'no', origenReporte: '', peticion: '', hora: '',
@@ -163,51 +157,18 @@ export default function App() {
     <>
       {/* ESTILOS CSS */}
       <style>{`
+        /* ... Estilos anteriores del formulario ... */
         .searchable-dropdown { position: relative; }
-        .dropdown-toggle {
-          width: 100%;
-          padding: 0.75rem;
-          border: 1px solid #ddd;
-          border-radius: 6px;
-          font-size: 1rem;
-          text-align: left;
-          background-color: white;
-          cursor: pointer;
-        }
+        .dropdown-toggle { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; text-align: left; background-color: white; cursor: pointer; }
         .dropdown-toggle.placeholder { color: #6c757d; }
-        .suggestions-list {
-          position: absolute;
-          background-color: white;
-          border: 1px solid #ddd;
-          border-radius: 6px;
-          width: 100%;
-          z-index: 1000;
-          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .suggestion-search-input {
-          width: 100%;
-          padding: 0.75rem;
-          border: none;
-          border-bottom: 1px solid #ddd;
-          border-radius: 6px 6px 0 0;
-          font-size: 1rem;
-          box-sizing: border-box;
-        }
+        .suggestions-list { position: absolute; background-color: white; border: 1px solid #ddd; border-radius: 6px; width: 100%; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .suggestion-search-input { width: 100%; padding: 0.75rem; border: none; border-bottom: 1px solid #ddd; border-radius: 6px 6px 0 0; font-size: 1rem; box-sizing: border-box; }
         .suggestion-search-input:focus { outline: none; }
-        .suggestion-items-container {
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .suggestion-item { 
-          padding: 10px; 
-          cursor: pointer;
-          color: #333; /* <-- CORRECCIÓN: Se asegura que el texto sea oscuro */
-        }
+        .suggestion-items-container { max-height: 200px; overflow-y: auto; }
+        .suggestion-item { padding: 10px; cursor: pointer; color: #333; }
         .suggestion-item:hover { background-color: #f0f0f0; }
         .suggestion-item.add-new { color: #007bff; font-style: italic; }
-        /* Estilos generales del formulario */
         .form-peticion-container { max-width: 800px; margin: 2rem auto; padding: 2rem; background-color: #f9f9f9; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; }
-        .form-title { text-align: center; color: #333; margin-bottom: 1.5rem; font-size: 1.8rem; }
         .peticion-form .form-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
         @media (min-width: 768px) { .peticion-form .form-grid { grid-template-columns: repeat(2, 1fr); } }
         .form-column { display: flex; flex-direction: column; gap: 1rem; }
@@ -232,10 +193,41 @@ export default function App() {
         .message-display.success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .message-display.error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
         .full-width-group { grid-column: 1 / -1; }
+
+        /* --- 2. ESTILOS AÑADIDOS --- */
+        .form-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 1.5rem;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 1rem;
+        }
+        .form-title {
+          text-align: left; /* Alineamos a la izquierda */
+          margin-bottom: 0;
+        }
+        .back-link {
+          text-decoration: none;
+          background-color: #f0f0f0;
+          padding: 0.5rem 1rem;
+          border-radius: 6px;
+          color: #333;
+          font-weight: 500;
+          border: 1px solid #ddd;
+        }
+        .back-link:hover {
+          background-color: #e2e6ea;
+        }
       `}</style>
       
       <div className="form-peticion-container">
-        <h2 className="form-title">Registrar un Nuevo Reporte</h2>
+        {/* --- 3. HEADER AÑADIDO --- */}
+        <div className="form-header">
+          <h2 className="form-title">Registrar un Nuevo Reporte</h2>
+          <Link to="/" className="back-link">← Volver al Inicio</Link>
+        </div>
+
         <form onSubmit={handleSubmit} className="peticion-form" autoComplete="off">
           <div className="form-grid">
             <div className="form-column">
@@ -258,7 +250,6 @@ export default function App() {
             </div>
 
             <div className="form-column">
-              {/* --- CAMPO DE LOCALIDAD CON BÚSQUEDA INTERNA --- */}
               <div className="form-group searchable-dropdown" ref={dropdownRef}>
                 <label>Localidad*</label>
                 <button
@@ -297,7 +288,7 @@ export default function App() {
                 )}
               </div>
               
-               <div className="form-group">
+              <div className="form-group">
                 <label>¿Es referente a una Estructura?</label>
                 <div className="radio-group">
                   <label className="radio-label"><input type="radio" name="estructura" value="si" checked={formData.estructura === 'si'} onChange={handleChange} /> Sí</label>
@@ -318,7 +309,7 @@ export default function App() {
             </div>
           </div>
 
-           <div className="form-group full-width-group">
+          <div className="form-group full-width-group">
             <label htmlFor="peticion">Descripción del Reporte*</label>
             <textarea id="peticion" name="peticion" value={formData.peticion} onChange={handleChange} placeholder="Detalla aquí la solicitud o reporte..." rows="4" required className="form-textarea" />
           </div>
