@@ -1,22 +1,27 @@
 // src/components/VerPeticiones.js
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // Link es necesario para el nuevo botón
+import { Link } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { collection, getDocs, doc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
 
 export default function VerPeticiones() {
-  // --- SIN CAMBIOS EN LOS ESTADOS ---
   const [peticiones, setPeticiones] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [peticionesFiltradas, setPeticionesFiltradas] = useState([]);
+  
+  // Estados para los filtros
   const [filtroEstatus, setFiltroEstatus] = useState('todos');
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
-  const [peticionesFiltradas, setPeticionesFiltradas] = useState([]);
+  const [filtroDireccion, setFiltroDireccion] = useState('todas');
+  const [direccionesOptions, setDireccionesOptions] = useState([]);
+
+  // Estados para el modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [peticionActual, setPeticionActual] = useState(null);
   const [nuevoEstatus, setNuevoEstatus] = useState('');
 
-  // --- SIN CAMBIOS EN LA LÓGICA ---
+  // Carga inicial de datos
   useEffect(() => {
     const fetchPeticiones = async () => {
       try {
@@ -30,22 +35,45 @@ export default function VerPeticiones() {
         setIsLoading(false);
       }
     };
+
+    const fetchDirecciones = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "direcciones"));
+        const data = querySnapshot.docs.map(doc => doc.data().nombre).sort();
+        setDireccionesOptions(data);
+      } catch (error) {
+        console.error("Error cargando direcciones: ", error);
+      }
+    };
+
     fetchPeticiones();
+    fetchDirecciones();
   }, []);
 
+  // Lógica de filtrado
   useEffect(() => {
     let resultado = peticiones;
+
+    // 1. Filtro por Estatus
     if (filtroEstatus !== 'todos') {
       resultado = resultado.filter(p => p.estatus === filtroEstatus);
     }
+
+    // 2. Filtro por Dirección
+    if (filtroDireccion !== 'todas') {
+      resultado = resultado.filter(p => p.direccion === filtroDireccion);
+    }
+
+    // 3. Búsqueda por Nombre
     if (terminoBusqueda) {
       resultado = resultado.filter(p => {
         const nombreCompleto = `${p.nombres || ''} ${p.apellidoPaterno || ''} ${p.apellidoMaterno || ''}`.toLowerCase();
         return nombreCompleto.includes(terminoBusqueda.toLowerCase());
       });
     }
+
     setPeticionesFiltradas(resultado);
-  }, [peticiones, filtroEstatus, terminoBusqueda]);
+  }, [peticiones, filtroEstatus, filtroDireccion, terminoBusqueda]);
 
   const handleDelete = async (id) => {
     if (window.confirm("¿Estás seguro de que quieres eliminar este reporte?")) {
@@ -55,6 +83,7 @@ export default function VerPeticiones() {
         alert("Reporte eliminado.");
       } catch (error) {
         console.error("Error al eliminar: ", error);
+        alert("Ocurrió un error al eliminar el reporte.");
       }
     }
   };
@@ -77,8 +106,10 @@ export default function VerPeticiones() {
       alert("Estatus actualizado.");
     } catch (error) {
       console.error("Error al actualizar: ", error);
+      alert("Ocurrió un error al actualizar el estatus.");
     }
   };
+
 
   if (isLoading) {
     return <div className="loading-container">Cargando reportes...</div>;
@@ -87,40 +118,30 @@ export default function VerPeticiones() {
   return (
     <>
       <style>{`
-        /* ... Estilos anteriores sin cambios ... */
         .admin-container { max-width: 1200px; margin: 2rem auto; padding: 2rem; font-family: sans-serif; }
         .admin-header { display: flex; flex-direction: column; gap: 1.5rem; border-bottom: 2px solid #eee; padding-bottom: 1rem; margin-bottom: 2rem; }
         .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .admin-title { color: #333; }
         .back-link { text-decoration: none; background-color: #f0f0f0; padding: 0.5rem 1rem; border-radius: 6px; color: #333; font-weight: 500; }
-        .filter-controls { display: flex; gap: 1rem; width: 100%; }
+        .filter-controls { display: flex; flex-wrap: wrap; gap: 1rem; width: 100%; }
         .filter-controls select, .filter-controls input { padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
-        .filter-controls input { flex-grow: 1; }
+        .filter-controls input { flex-grow: 1; min-width: 200px; }
         .peticiones-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 2rem; }
         .peticion-card { background-color: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding: 1.5rem; display: flex; flex-direction: column; }
         .peticion-card h3 { margin-top: 0; color: #0056b3; }
         .peticion-card .estatus { font-weight: bold; padding: 0.2rem 0.5rem; border-radius: 4px; color: white; display: inline-block; margin-bottom: 1rem; text-transform: capitalize; }
         .estatus-pendiente { background-color: #f0ad4e; }
-        .estatus-en\.proceso { background-color: #337ab7; }
+        .estatus-en\\.proceso { background-color: #337ab7; }
         .estatus-resuelta { background-color: #5cb85c; }
-        .estatus-no\.procede { background-color: #777; }
+        .estatus-no\\.procede { background-color: #777; }
         .peticion-card p { margin: 0.5rem 0; line-height: 1.5; color: #555; }
         .peticion-card strong { color: #333; }
         .peticion-image { width: 100%; height: auto; border-radius: 6px; margin-top: 1rem; border: 1px solid #eee; }
         .card-actions { margin-top: auto; padding-top: 1rem; border-top: 1px solid #eee; display: flex; gap: 0.5rem; justify-content: flex-end; }
         .action-button { border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .edit-button { background-color: #337ab7; color: white; }
+        .detail-button { background-color: #5bc0de; color: white; text-decoration: none; display: inline-flex; align-items: center; }
         .delete-button { background-color: #d9534f; color: white; }
-        
-        /* --- ESTILO PARA EL NUEVO BOTÓN --- */
-        .detail-button { 
-          background-color: #5bc0de; 
-          color: white; 
-          text-decoration: none;
-          display: inline-flex;
-          align-items: center;
-        }
-
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
         .modal-content { background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; }
         .modal-actions { text-align: right; margin-top: 1.5rem; }
@@ -128,7 +149,6 @@ export default function VerPeticiones() {
       `}</style>
       
       <div className="admin-container">
-        {/* --- EL HEADER Y LOS FILTROS NO CAMBIAN --- */}
         <div className="admin-header">
           <div className="header-top">
             <h1 className="admin-title">Administrar Reportes</h1>
@@ -142,6 +162,14 @@ export default function VerPeticiones() {
               <option value="resuelta">Resuelta</option>
               <option value="no procede">No Procede</option>
             </select>
+            
+            <select value={filtroDireccion} onChange={e => setFiltroDireccion(e.target.value)}>
+              <option value="todas">Todas las Direcciones</option>
+              {direccionesOptions.map(dir => (
+                <option key={dir} value={dir}>{dir}</option>
+              ))}
+            </select>
+
             <input 
               type="text"
               placeholder="Buscar por nombre o apellido..."
@@ -160,17 +188,21 @@ export default function VerPeticiones() {
                   {p.estatus}
                 </span>
                 <p><strong>Localidad:</strong> {p.localidad}</p>
+                {p.direccion && <p><strong>Dirección:</strong> {p.direccion}</p>}
                 <p><strong>Petición:</strong> {p.peticion}</p>
                 <p><strong>Fecha:</strong> {p.fecha ? new Date(p.fecha.seconds * 1000).toLocaleString() : 'N/A'}</p>
-                {p.ineURL && <a href={p.ineURL} target="_blank" rel="noopener noreferrer"><img src={p.ineURL} alt="..." className="peticion-image" /></a>}
                 
-                {/* --- SECCIÓN DE ACCIONES ACTUALIZADA --- */}
+                {p.ineURL && (
+                  <a href={p.ineURL} target="_blank" rel="noopener noreferrer">
+                    <img src={p.ineURL} alt={`Identificación de ${p.nombres}`} className="peticion-image" />
+                  </a>
+                )}
+                
                 <div className="card-actions">
                   <button onClick={() => abrirModalEdicion(p)} className="action-button edit-button">Editar Estatus</button>
                   <Link to={`/reporte/${p.id}`} className="action-button detail-button">
                     Ver Detalle
                   </Link>
-                  {/* <button onClick={() => handleDelete(p.id)} className="action-button delete-button">Eliminar</button> */}
                 </div>
               </div>
             ))}
@@ -182,7 +214,6 @@ export default function VerPeticiones() {
         )}
       </div>
 
-      {/* --- EL MODAL NO CAMBIA --- */}
       {isModalOpen && (
         <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
