@@ -1,8 +1,8 @@
 // src/components/DetalleReporte.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { db } from '../services/firebase';
-import { doc, getDoc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, deleteDoc, Timestamp, collection, getDocs, addDoc } from 'firebase/firestore';
 
 export default function DetalleReporte() {
   const { reporteId } = useParams();
@@ -16,12 +16,27 @@ export default function DetalleReporte() {
     telefono: '',
     estatus: '',
     localidad: '',
+    direccion: '',
     peticion: '',
     fecha: '',
     hora: ''
   });
   const [isLoading, setIsLoading] = useState(true);
 
+  // Estados y Refs para los Dropdowns
+  const [localidadesOptions, setLocalidadesOptions] = useState([]);
+  const [localidadSearchTerm, setLocalidadSearchTerm] = useState("");
+  const [isLocalidadListOpen, setIsLocalidadListOpen] = useState(false);
+  const localidadDropdownRef = useRef(null);
+
+  const [direccionesOptions, setDireccionesOptions] = useState([]);
+  const [direccionSearchTerm, setDireccionSearchTerm] = useState("");
+  const [isDireccionListOpen, setIsDireccionListOpen] = useState(false);
+  const direccionDropdownRef = useRef(null);
+
+
+  // --- EFECTOS ---
+  // Obtener datos del reporte específico
   useEffect(() => {
     const fetchReporte = async () => {
       try {
@@ -31,6 +46,7 @@ export default function DetalleReporte() {
         if (docSnap.exists()) {
           const data = docSnap.data();
           setReporte(data);
+          const fechaDelReporte = data.fecha ? data.fecha.toDate() : new Date();
           setFormData({
             nombres: data.nombres || '',
             apellidoPaterno: data.apellidoPaterno || '',
@@ -38,9 +54,10 @@ export default function DetalleReporte() {
             telefono: data.telefono || '',
             estatus: data.estatus || 'pendiente',
             localidad: data.localidad || '',
+            direccion: data.direccion || '',
             peticion: data.peticion || '',
-            fecha: data.fecha ? new Date(data.fecha.seconds * 1000).toISOString().split('T')[0] : '',
-            hora: data.hora || ''
+            fecha: fechaDelReporte.toISOString().split('T')[0],
+            hora: fechaDelReporte.toTimeString().split(' ')[0].substring(0, 5),
           });
         } else {
           setReporte(false);
@@ -53,16 +70,69 @@ export default function DetalleReporte() {
     };
     fetchReporte();
   }, [reporteId]);
+  
+  // Cargar listas para los dropdowns
+  useEffect(() => {
+    const fetchDropdownData = async (collectionName, setData) => {
+      try {
+        const querySnapshot = await getDocs(collection(db, collectionName));
+        const data = querySnapshot.docs.map(doc => doc.data().nombre).sort((a,b) => a.localeCompare(b));
+        setData(data);
+      } catch (error) {
+        console.error(`Error cargando ${collectionName}: `, error);
+      }
+    };
+    fetchDropdownData('localidades', setLocalidadesOptions);
+    fetchDropdownData('direcciones', setDireccionesOptions);
+  }, []);
 
+  // Efectos para cerrar los dropdowns al hacer clic afuera
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (localidadDropdownRef.current && !localidadDropdownRef.current.contains(event.target)) {
+        setIsLocalidadListOpen(false);
+      }
+      if (direccionDropdownRef.current && !direccionDropdownRef.current.contains(event.target)) {
+        setIsDireccionListOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+
+  // --- MANEJADORES DE EVENTOS ---
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({ ...prevData, [name]: value }));
+  };
+
+  const handleLocalidadSelect = (selected) => {
+    setFormData(prevData => ({ ...prevData, localidad: selected }));
+    setIsLocalidadListOpen(false);
+    setLocalidadSearchTerm("");
+  };
+
+  const handleDireccionSelect = (selected) => {
+    setFormData(prevData => ({ ...prevData, direccion: selected }));
+    setIsDireccionListOpen(false);
+    setDireccionSearchTerm("");
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     const docRef = doc(db, 'peticiones', reporteId);
     try {
+      const localidadFinal = formData.localidad.trim();
+      const direccionFinal = formData.direccion.trim();
+
+      if (localidadFinal && !localidadesOptions.some(loc => loc.toLowerCase() === localidadFinal.toLowerCase())) {
+        await addDoc(collection(db, 'localidades'), { nombre: localidadFinal });
+      }
+      if (direccionFinal && !direccionesOptions.some(dir => dir.toLowerCase() === direccionFinal.toLowerCase())) {
+        await addDoc(collection(db, 'direcciones'), { nombre: direccionFinal });
+      }
+
       const datosActualizados = {
         ...formData,
         fecha: Timestamp.fromDate(new Date(`${formData.fecha}T${formData.hora || '00:00:00'}`))
@@ -79,8 +149,7 @@ export default function DetalleReporte() {
   const handleDelete = async () => {
     if (window.confirm("¿Estás seguro de que quieres eliminar este reporte? Esta acción es irreversible.")) {
       try {
-        const docRef = doc(db, 'peticiones', reporteId);
-        await deleteDoc(docRef);
+        await deleteDoc(doc(db, 'peticiones', reporteId));
         alert("Reporte eliminado con éxito.");
         navigate('/ver-reportes');
       } catch (error) {
@@ -89,6 +158,9 @@ export default function DetalleReporte() {
       }
     }
   };
+
+  const filteredLocalidades = localidadesOptions.filter(loc => loc.toLowerCase().includes(localidadSearchTerm.toLowerCase()));
+  const filteredDirecciones = direccionesOptions.filter(dir => dir.toLowerCase().includes(direccionSearchTerm.toLowerCase()));
 
   if (isLoading) return <div className="loading-container">Cargando detalle del reporte...</div>;
   if (reporte === false) return <div><h1>Reporte no encontrado</h1><Link to="/ver-reportes">Volver a la lista</Link></div>;
@@ -103,7 +175,7 @@ export default function DetalleReporte() {
         .form-group { display: flex; flex-direction: column; }
         .full-width { grid-column: 1 / -1; }
         .form-group label { margin-bottom: 0.5rem; color: #555; font-weight: 500; }
-        .form-input, .form-textarea, .form-select { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
+        .form-input, .form-textarea, .form-select, .dropdown-toggle { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
         .form-textarea { resize: vertical; min-height: 120px; }
         .form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem; }
         .submit-button, .delete-button { padding: 0.7rem 1.5rem; border: none; border-radius: 6px; font-weight: 500; cursor: pointer; }
@@ -111,6 +183,15 @@ export default function DetalleReporte() {
         .delete-button { background-color: #d9534f; color: white; }
         .report-image { max-width: 100%; border-radius: 8px; margin-top: 1rem; border: 1px solid #ddd; }
         .image-section { margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; }
+        .searchable-dropdown { position: relative; }
+        .dropdown-toggle { text-align: left; background-color: white; cursor: pointer; }
+        .dropdown-toggle.placeholder { color: #6c757d; }
+        .suggestions-list { position: absolute; background-color: white; border: 1px solid #ddd; border-radius: 6px; width: 100%; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .suggestion-search-input { width: 100%; padding: 0.75rem; border: none; border-bottom: 1px solid #ddd; border-radius: 6px 6px 0 0; font-size: 1rem; box-sizing: border-box; }
+        .suggestion-items-container { max-height: 200px; overflow-y: auto; }
+        .suggestion-item { padding: 10px; cursor: pointer; color: #333; }
+        .suggestion-item:hover { background-color: #f0f0f0; }
+        .suggestion-item.add-new { color: #007bff; font-style: italic; }
       `}</style>
       <div className="detalle-container">
         <div className="detalle-header">
@@ -136,10 +217,39 @@ export default function DetalleReporte() {
               <label htmlFor="telefono">Teléfono</label>
               <input type="tel" id="telefono" name="telefono" value={formData.telefono} onChange={handleChange} className="form-input" />
             </div>
-            <div className="form-group">
-              <label htmlFor="localidad">Localidad</label>
-              <input type="text" id="localidad" name="localidad" value={formData.localidad} onChange={handleChange} className="form-input" />
+            
+            <div className="form-group searchable-dropdown" ref={localidadDropdownRef}>
+              <label>Localidad</label>
+              <button type="button" className={`dropdown-toggle ${!formData.localidad ? 'placeholder' : ''}`} onClick={() => setIsLocalidadListOpen(!isLocalidadListOpen)}>
+                {formData.localidad || "Selecciona una localidad"}
+              </button>
+              {isLocalidadListOpen && (
+                <div className="suggestions-list">
+                  <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir..." value={localidadSearchTerm} onChange={(e) => setLocalidadSearchTerm(e.target.value)} autoFocus />
+                  <div className="suggestion-items-container">
+                    {filteredLocalidades.map(loc => ( <div key={loc} className="suggestion-item" onClick={() => handleLocalidadSelect(loc)}>{loc}</div> ))}
+                    {filteredLocalidades.length === 0 && localidadSearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleLocalidadSelect(localidadSearchTerm)}>Añadir nueva: "{localidadSearchTerm}"</div> )}
+                  </div>
+                </div>
+              )}
             </div>
+            
+            <div className="form-group searchable-dropdown" ref={direccionDropdownRef}>
+              <label>Dirección</label>
+              <button type="button" className={`dropdown-toggle ${!formData.direccion ? 'placeholder' : ''}`} onClick={() => setIsDireccionListOpen(!isDireccionListOpen)}>
+                {formData.direccion || "Selecciona una dirección"}
+              </button>
+              {isDireccionListOpen && (
+                <div className="suggestions-list">
+                  <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir..." value={direccionSearchTerm} onChange={(e) => setDireccionSearchTerm(e.target.value)} autoFocus />
+                  <div className="suggestion-items-container">
+                    {filteredDirecciones.map(dir => ( <div key={dir} className="suggestion-item" onClick={() => handleDireccionSelect(dir)}>{dir}</div> ))}
+                    {filteredDirecciones.length === 0 && direccionSearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleDireccionSelect(direccionSearchTerm)}>Añadir nueva: "{direccionSearchTerm}"</div> )}
+                  </div>
+                </div>
+              )}
+            </div>
+            
             <div className="form-group">
               <label htmlFor="estatus">Estatus</label>
               <select id="estatus" name="estatus" value={formData.estatus} onChange={handleChange} className="form-select">
@@ -164,7 +274,6 @@ export default function DetalleReporte() {
             <textarea id="peticion" name="peticion" value={formData.peticion} onChange={handleChange} className="form-textarea" />
           </div>
           
-          {/* --- IMAGEN Y ACCIONES AHORA DENTRO Y AL FINAL DEL FORMULARIO --- */}
           {reporte?.ineURL && (
             <div className="image-section">
                 <h3>Identificación Adjunta</h3>
