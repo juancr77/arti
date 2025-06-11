@@ -1,8 +1,9 @@
 // src/components/DetalleReporte.js
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { db } from '../services/firebase';
+import { db, storage } from '../services/firebase';
 import { doc, getDoc, updateDoc, deleteDoc, Timestamp, collection, getDocs, addDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 
 export default function DetalleReporte() {
   const { reporteId } = useParams();
@@ -17,11 +18,16 @@ export default function DetalleReporte() {
     estatus: '',
     localidad: '',
     direccion: '',
+    origenReporte: '',
     peticion: '',
     fecha: '',
     hora: ''
   });
   const [isLoading, setIsLoading] = useState(true);
+
+  // Estado para el nuevo archivo de imagen
+  const [newImageFile, setNewImageFile] = useState(null);
+  const [newImageFileName, setNewImageFileName] = useState('');
 
   // Estados y Refs para los Dropdowns
   const [localidadesOptions, setLocalidadesOptions] = useState([]);
@@ -35,8 +41,7 @@ export default function DetalleReporte() {
   const direccionDropdownRef = useRef(null);
 
 
-  // --- EFECTOS ---
-  // Obtener datos del reporte específico
+  // EFECTOS
   useEffect(() => {
     const fetchReporte = async () => {
       try {
@@ -55,6 +60,7 @@ export default function DetalleReporte() {
             estatus: data.estatus || 'pendiente',
             localidad: data.localidad || '',
             direccion: data.direccion || '',
+            origenReporte: data.origenReporte || '',
             peticion: data.peticion || '',
             fecha: fechaDelReporte.toISOString().split('T')[0],
             hora: fechaDelReporte.toTimeString().split(' ')[0].substring(0, 5),
@@ -71,7 +77,6 @@ export default function DetalleReporte() {
     fetchReporte();
   }, [reporteId]);
   
-  // Cargar listas para los dropdowns
   useEffect(() => {
     const fetchDropdownData = async (collectionName, setData) => {
       try {
@@ -86,7 +91,6 @@ export default function DetalleReporte() {
     fetchDropdownData('direcciones', setDireccionesOptions);
   }, []);
 
-  // Efectos para cerrar los dropdowns al hacer clic afuera
   useEffect(() => {
     function handleClickOutside(event) {
       if (localidadDropdownRef.current && !localidadDropdownRef.current.contains(event.target)) {
@@ -101,10 +105,18 @@ export default function DetalleReporte() {
   }, []);
 
 
-  // --- MANEJADORES DE EVENTOS ---
+  // MANEJADORES DE EVENTOS
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({ ...prevData, [name]: value }));
+  };
+
+  const handleNewImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setNewImageFile(file);
+      setNewImageFileName(file.name);
+    }
   };
 
   const handleLocalidadSelect = (selected) => {
@@ -121,11 +133,31 @@ export default function DetalleReporte() {
 
   const handleUpdate = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     const docRef = doc(db, 'peticiones', reporteId);
+    
     try {
+      let datosActualizados = { ...formData };
+      
+      if (newImageFile) {
+        if (reporte.ineURL) {
+          try {
+            const oldImageRef = ref(storage, reporte.ineURL);
+            await deleteObject(oldImageRef);
+          } catch (deleteError) {
+            console.warn("No se pudo borrar la imagen antigua, puede que ya no exista:", deleteError);
+          }
+        }
+        
+        const newImageStorageRef = ref(storage, `peticiones_ines/${Date.now()}_${newImageFile.name}`);
+        await uploadBytes(newImageStorageRef, newImageStorageRef);
+        
+        const newUrl = await getDownloadURL(newImageStorageRef);
+        datosActualizados.ineURL = newUrl;
+      }
+
       const localidadFinal = formData.localidad.trim();
       const direccionFinal = formData.direccion.trim();
-
       if (localidadFinal && !localidadesOptions.some(loc => loc.toLowerCase() === localidadFinal.toLowerCase())) {
         await addDoc(collection(db, 'localidades'), { nombre: localidadFinal });
       }
@@ -133,16 +165,18 @@ export default function DetalleReporte() {
         await addDoc(collection(db, 'direcciones'), { nombre: direccionFinal });
       }
 
-      const datosActualizados = {
-        ...formData,
-        fecha: Timestamp.fromDate(new Date(`${formData.fecha}T${formData.hora || '00:00:00'}`))
-      };
+      datosActualizados.fecha = Timestamp.fromDate(new Date(`${formData.fecha}T${formData.hora || '00:00:00'}`));
+
       await updateDoc(docRef, datosActualizados);
+      
       alert("¡Reporte actualizado con éxito!");
       navigate('/ver-reportes');
+
     } catch (error) {
       console.error("Error al actualizar el documento: ", error);
       alert("Ocurrió un error al actualizar.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -162,7 +196,7 @@ export default function DetalleReporte() {
   const filteredLocalidades = localidadesOptions.filter(loc => loc.toLowerCase().includes(localidadSearchTerm.toLowerCase()));
   const filteredDirecciones = direccionesOptions.filter(dir => dir.toLowerCase().includes(direccionSearchTerm.toLowerCase()));
 
-  if (isLoading) return <div className="loading-container">Cargando detalle del reporte...</div>;
+  if (isLoading) return <div className="loading-container">Cargando...</div>;
   if (reporte === false) return <div><h1>Reporte no encontrado</h1><Link to="/ver-reportes">Volver a la lista</Link></div>;
 
   return (
@@ -183,6 +217,7 @@ export default function DetalleReporte() {
         .delete-button { background-color: #d9534f; color: white; }
         .report-image { max-width: 100%; border-radius: 8px; margin-top: 1rem; border: 1px solid #ddd; }
         .image-section { margin-top: 2rem; border-top: 1px solid #eee; padding-top: 1.5rem; }
+        .file-name-display { font-size: 0.85rem; color: #666; margin-top: 0.5rem; }
         .searchable-dropdown { position: relative; }
         .dropdown-toggle { text-align: left; background-color: white; cursor: pointer; }
         .dropdown-toggle.placeholder { color: #6c757d; }
@@ -251,6 +286,17 @@ export default function DetalleReporte() {
             </div>
             
             <div className="form-group">
+              <label htmlFor="origenReporte">Origen del Reporte/Petición</label>
+              <select id="origenReporte" name="origenReporte" value={formData.origenReporte} onChange={handleChange} className="form-select">
+                <option value="">-- Selecciona un origen --</option>
+                <option value="Red Social">Red Social</option>
+                <option value="WhatsApp">WhatsApp</option>
+                <option value="Recomendación">Recomendación</option>
+                <option value="Otro">Otro</option>
+              </select>
+            </div>
+
+            <div className="form-group">
               <label htmlFor="estatus">Estatus</label>
               <select id="estatus" name="estatus" value={formData.estatus} onChange={handleChange} className="form-select">
                 <option value="pendiente">Pendiente</option>
@@ -274,16 +320,33 @@ export default function DetalleReporte() {
             <textarea id="peticion" name="peticion" value={formData.peticion} onChange={handleChange} className="form-textarea" />
           </div>
           
-          {reporte?.ineURL && (
-            <div className="image-section">
-                <h3>Identificación Adjunta</h3>
+          <div className="image-section">
+              <h3>Identificación Adjunta</h3>
+              {reporte?.ineURL ? (
                 <img src={reporte.ineURL} alt="Identificación" className="report-image" />
-            </div>
-          )}
+              ) : (
+                <p>No hay imagen adjunta.</p>
+              )}
+              
+              <div className="form-group" style={{marginTop: '1rem'}}>
+                  <label htmlFor="ineFile">Reemplazar Identificación (Opcional)</label>
+                  <input 
+                    type="file" 
+                    id="ineFile" 
+                    name="ineFile" 
+                    onChange={handleNewImageChange} 
+                    accept="image/*,.pdf" 
+                    className="form-input"
+                  />
+                  {newImageFileName && <p className="file-name-display">Nuevo archivo: {newImageFileName}</p>}
+              </div>
+          </div>
 
           <div className="form-actions">
             <button type="button" onClick={handleDelete} className="delete-button">Eliminar Reporte</button>
-            <button type="submit" className="submit-button">Guardar Cambios</button>
+            <button type="submit" className="submit-button" disabled={isLoading}>
+              {isLoading ? 'Guardando...' : 'Guardar Cambios'}
+            </button>
           </div>
         </form>
       </div>
