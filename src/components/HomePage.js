@@ -1,7 +1,8 @@
 // src/components/HomePage.js
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+// --- LÍNEA IMPORTANTE AÑADIDA/CORREGIDA ---
+import { Link } from 'react-router-dom'; 
 
 const HomePage = () => {
   return (
@@ -13,14 +14,15 @@ const HomePage = () => {
         <Link to="/nuevo-reporte" className="home-menu-button">
           Generar Nuevo Reporte
         </Link>
-        {/* Este botón lo añadimos en la sugerencia anterior */}
         <Link to="/ver-reportes" className="home-menu-button admin">
           Ver y Administrar Reportes
+        </Link>
+        <Link to="/dashboard" className="home-menu-button dashboard">
+          Dashboard de Seguimiento
         </Link>
       </div>
     </div>
   );
 };
 
-// --- LÍNEA AÑADIDA ---
-export default HomePage; // <-- ¡Esta es la corrección!
+export default HomePage;
