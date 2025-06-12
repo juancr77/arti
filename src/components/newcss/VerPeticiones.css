@@ -17,7 +17,31 @@
   margin-bottom: 2rem; 
 }
 
-/* ... (estilos de .header-top, .filter-controls, etc. que ya tenías) ... */
+.header-top { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  width: 100%; 
+}
+
+.filter-controls { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: 1rem; 
+  width: 100%; 
+}
+
+.filter-controls select, .filter-controls input { 
+  padding: 0.6rem; 
+  border: 1px solid #ccc; 
+  border-radius: 6px; 
+  font-size: 1rem; 
+}
+
+.filter-controls input { 
+  flex-grow: 1; 
+  min-width: 200px; 
+}
 
 .peticiones-grid { 
   display: grid; 
@@ -42,9 +66,69 @@
     transform: translateY(-5px);
 }
 
-/* ... (estilos de .peticion-card h3, p, strong, .card-actions, etc. que ya tenías) ... */
+.peticion-card h3 { 
+  margin-top: 0; 
+  color: #0056b3; 
+}
+.peticion-card .estatus { 
+  font-weight: bold; 
+  padding: 0.2rem 0.5rem; 
+  border-radius: 4px; 
+  color: white; 
+  display: inline-block; 
+  margin-bottom: 1rem; 
+  text-transform: capitalize; 
+}
+.estatus-pendiente { background-color: #f0ad4e; }
+.estatus-en\.proceso { background-color: #337ab7; }
+.estatus-resuelta { background-color: #5cb85c; }
+.estatus-no\.procede { background-color: #777; }
+.peticion-card p { 
+  margin: 0.5rem 0; 
+  line-height: 1.5; 
+  color: #555; 
+}
+.peticion-card strong { 
+  color: #333; 
+}
 
-/* Media Queries para Responsividad */
+.peticion-image {
+  width: 100%;
+  height: 200px;
+  object-fit: contain; /* Muestra la imagen completa sin recortes */
+  border-radius: 6px;
+  margin-top: 1rem;
+  background-color: rgba(240, 242, 245, 0.5); /* Fondo suave si la imagen no llena el espacio */
+}
+
+.card-actions { 
+  margin-top: auto; 
+  padding-top: 1rem; 
+  border-top: 1px solid #eee; 
+  display: flex; 
+  gap: 0.5rem; 
+  justify-content: flex-end; 
+}
+.action-button { 
+  border: none; 
+  padding: 0.5rem 1rem; 
+  border-radius: 5px; 
+  cursor: pointer; 
+  font-weight: bold; 
+}
+.edit-button { 
+  background-color: #337ab7; 
+  color: white; 
+}
+.detail-button { 
+  background-color: #5bc0de; 
+  color: white; 
+  text-decoration: none; 
+  display: inline-flex; 
+  align-items: center; 
+}
+
+/* --- Media Queries para Responsividad --- */
 @media (max-width: 1200px) {
   .peticiones-grid {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -55,7 +139,11 @@
   .admin-container {
     padding: 1rem;
   }
+  .header-top, .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
   .peticiones-grid {
-    grid-template-columns: 1fr; /* Una sola columna en móvil */
+    grid-template-columns: 1fr;
   }
 }

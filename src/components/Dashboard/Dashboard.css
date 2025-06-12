@@ -2,75 +2,85 @@
   max-width: 1600px;
   margin: 2rem auto;
   padding: 2rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
 .dashboard-header {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border-bottom: 2px solid rgba(238, 238, 238, 0.5);
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+}
+
+.header-top {
+  display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #eee;
+  width: 100%;
+}
+
+.filter-controls {
+  display: flex;
+  gap: 1rem;
+}
+
+.filter-controls select {
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  background-color: white;
 }
 
 .dashboard-board {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
-  min-height: 70vh;
 }
 
 .dashboard-column {
   display: flex;
   flex-direction: column;
-  background-color: #f4f5f7;
-  border-radius: 8px;
+  border-radius: 12px;
+  background-color: rgba(244, 245, 247, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 1rem;
 }
 
 .dashboard-column h2 {
   font-size: 1.2rem;
   padding: 0.8rem;
-  margin: -1rem -1rem 1rem -1rem; /* Para que ocupe todo el ancho */
-  border-radius: 8px 8px 0 0;
+  margin: -1rem -1rem 1rem -1rem;
+  border-radius: 12px 12px 0 0;
   color: white;
   text-align: center;
 }
 
-/* Colores de las columnas */
-.dashboard-column.red h2 {
-  background-color: #c62828; /* Rojo oscuro */
-}
-.dashboard-column.red {
-  background-color: #ffebee; /* Rojo claro */
-}
-
-.dashboard-column.amber h2 {
-  background-color: #ff8f00; /* Ámbar oscuro */
-}
-.dashboard-column.amber {
-  background-color: #fff8e1; /* Ámbar claro */
-}
-
-.dashboard-column.green h2 {
-  background-color: #2e7d32; /* Verde oscuro */
-}
-.dashboard-column.green {
-  background-color: #e8f5e9; /* Verde claro */
-}
+.dashboard-column.red h2 { background-color: #c62828; }
+.dashboard-column.amber h2 { background-color: #ff8f00; }
+.dashboard-column.green h2 { background-color: #2e7d32; }
 
 .card-list {
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
-  overflow-y: auto; /* Permite scroll si hay muchas tarjetas */
+  overflow-y: auto;
   height: 100%;
+  min-height: 50vh;
   padding: 0.2rem;
 }
 
 .dashboard-card {
-  background-color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.95);
   border-radius: 6px;
   padding: 1rem;
   box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
@@ -90,77 +100,18 @@
   font-size: 1rem;
   color: #333;
 }
-
-.dashboard-card p {
-  margin: 0 0 0.8rem 0;
-  font-size: 0.9rem;
-  color: #555;
-  line-height: 1.4;
-}
-
-.dashboard-card .card-footer {
-  font-size: 0.75rem;
-  color: #777;
-  margin-top: auto; /* Empuja el pie de página hacia abajo */
-  padding-top: 0.5rem;
-  border-top: 1px solid #f0f0f0;
-}
-
-/* Colores del borde izquierdo de las tarjetas */
-.dashboard-column.red .dashboard-card { border-left-color: #c62828; }
-.dashboard-column.amber .dashboard-card { border-left-color: #ff8f00; }
-.dashboard-column.green .dashboard-card { border-left-color: #2e7d32; }
-
-/* ... Estilos anteriores ... */
-
-.dashboard-header {
-  display: flex;
-  flex-direction: column; /* Cambiamos a columna para alinear los filtros debajo */
-  align-items: flex-start; /* Alineamos al inicio */
-  gap: 1.5rem;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #eee;
-}
-
-.header-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
-
-/* NUEVO: Contenedor para los filtros */
-.filter-controls {
-  display: flex;
-  gap: 1rem;
-}
-
-.filter-controls select {
-  padding: 0.6rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-  background-color: white;
-}
-
-/* ... Estilos de .dashboard-board y .dashboard-column sin cambios ... */
-
-.dashboard-card p {
-  margin: 0 0 0.5rem 0; /* Ajuste de margen */
-  font-size: 0.9rem;
-  color: #555;
-  line-height: 1.4;
-}
-
-/* NUEVO: Estilo para la dirección en la tarjeta */
 .card-direction {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #337ab7; /* Un color azul para destacarlo */
+  color: #337ab7;
   margin-bottom: 0.8rem;
 }
-
+.dashboard-card p {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.9rem;
+  color: #555;
+  line-height: 1.4;
+}
 .dashboard-card .card-footer {
   font-size: 0.75rem;
   color: #777;
@@ -168,5 +119,22 @@
   padding-top: 0.5rem;
   border-top: 1px solid #f0f0f0;
 }
+.dashboard-column.red .dashboard-card { border-left-color: #c62828; }
+.dashboard-column.amber .dashboard-card { border-left-color: #ff8f00; }
+.dashboard-column.green .dashboard-card { border-left-color: #2e7d32; }
 
-/* ... El resto de los estilos sin cambios ... */
+/* --- Media Queries para Responsividad --- */
+@media (max-width: 1024px) {
+  .dashboard-board {
+    grid-template-columns: 1fr 1fr; /* Dos columnas en tablets */
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-board {
+    grid-template-columns: 1fr; /* Una sola columna en móvil */
+  }
+  .dashboard-container {
+    padding: 1rem;
+  }
+}

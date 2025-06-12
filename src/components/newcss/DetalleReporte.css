@@ -1,4 +1,3 @@
-/* Similar al formulario, usamos un contenedor con efecto "cristal" */
 .detalle-container { 
   max-width: 800px; 
   margin: 2rem auto; 
@@ -20,17 +19,95 @@
   margin-bottom: 2rem; 
 }
 
-/* ... (estilos del .edit-form, .form-grid, inputs, botones, etc. que ya tenías) ... */
+.edit-form { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 1.25rem; 
+}
 .form-grid { 
   display: grid; 
   grid-template-columns: 1fr 1fr; 
   gap: 1.25rem; 
 }
+.form-group { 
+  display: flex; 
+  flex-direction: column; 
+}
+.full-width { 
+  grid-column: 1 / -1; 
+}
+.form-group label { 
+  margin-bottom: 0.5rem; 
+  color: #555; 
+  font-weight: 500; 
+}
+.form-input, .form-textarea, .form-select, .dropdown-toggle { 
+  width: 100%; 
+  padding: 0.75rem; 
+  border: 1px solid #ddd; 
+  border-radius: 6px; 
+  font-size: 1rem; 
+  box-sizing: border-box; 
+}
+.form-textarea { 
+  resize: vertical; 
+  min-height: 120px; 
+}
+.form-actions { 
+  display: flex; 
+  justify-content: flex-end; 
+  gap: 1rem; 
+  margin-top: 1rem; 
+}
+.submit-button, .delete-button { 
+  padding: 0.7rem 1.5rem; 
+  border: none; 
+  border-radius: 6px; 
+  font-weight: 500; 
+  cursor: pointer; 
+}
+.submit-button { 
+  background-color: #007bff; 
+  color: white; 
+}
+.delete-button { 
+  background-color: #d9534f; 
+  color: white; 
+}
+.report-image {
+  display: block;
+  max-width: 400px;
+  width: 100%;
+  height: auto;
+  margin: 1rem auto;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.image-section { 
+  margin-top: 2rem; 
+  border-top: 1px solid #eee; 
+  padding-top: 1.5rem; 
+}
+.file-name-display { 
+  font-size: 0.85rem; 
+  color: #666; 
+  margin-top: 0.5rem; 
+}
+.searchable-dropdown { position: relative; }
+.dropdown-toggle { text-align: left; background-color: white; cursor: pointer; }
+.dropdown-toggle.placeholder { color: #6c757d; }
+.suggestions-list { position: absolute; background-color: white; border: 1px solid #ddd; border-radius: 6px; width: 100%; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+.suggestion-search-input { width: 100%; padding: 0.75rem; border: none; border-bottom: 1px solid #ddd; border-radius: 6px 6px 0 0; font-size: 1rem; box-sizing: border-box; }
+.suggestion-items-container { max-height: 200px; overflow-y: auto; }
+.suggestion-item { padding: 10px; cursor: pointer; color: #333; }
+.suggestion-item:hover { background-color: #f0f0f0; }
+.suggestion-item.add-new { color: #007bff; font-style: italic; }
 
-/* Media Queries para Responsividad */
+/* --- Media Queries para Responsividad --- */
 @media (max-width: 768px) {
   .form-grid {
-    grid-template-columns: 1fr; /* Una sola columna en tablets */
+    grid-template-columns: 1fr;
   }
   .detalle-container {
     margin: 1rem;
