@@ -110,3 +110,63 @@
 .dashboard-column.red .dashboard-card { border-left-color: #c62828; }
 .dashboard-column.amber .dashboard-card { border-left-color: #ff8f00; }
 .dashboard-column.green .dashboard-card { border-left-color: #2e7d32; }
+
+/* ... Estilos anteriores ... */
+
+.dashboard-header {
+  display: flex;
+  flex-direction: column; /* Cambiamos a columna para alinear los filtros debajo */
+  align-items: flex-start; /* Alineamos al inicio */
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #eee;
+}
+
+.header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+/* NUEVO: Contenedor para los filtros */
+.filter-controls {
+  display: flex;
+  gap: 1rem;
+}
+
+.filter-controls select {
+  padding: 0.6rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+  background-color: white;
+}
+
+/* ... Estilos de .dashboard-board y .dashboard-column sin cambios ... */
+
+.dashboard-card p {
+  margin: 0 0 0.5rem 0; /* Ajuste de margen */
+  font-size: 0.9rem;
+  color: #555;
+  line-height: 1.4;
+}
+
+/* NUEVO: Estilo para la dirección en la tarjeta */
+.card-direction {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #337ab7; /* Un color azul para destacarlo */
+  margin-bottom: 0.8rem;
+}
+
+.dashboard-card .card-footer {
+  font-size: 0.75rem;
+  color: #777;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* ... El resto de los estilos sin cambios ... */
