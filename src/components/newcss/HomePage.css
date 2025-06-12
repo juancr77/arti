@@ -2,18 +2,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100vh; /* Ocupa toda la altura de la pantalla */
-  background-color: #f0f2f5;
+  min-height: 100vh;
+  padding: 1rem; /* Añadimos padding para pantallas pequeñas */
+  box-sizing: border-box;
   text-align: center;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
 
+/* --- REGLA MODIFICADA --- */
 .home-menu-content {
-  background-color: white;
+  max-width: 600px;
+  width: 100%;
   padding: 3rem 4rem;
   border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  max-width: 600px;
+  /* Efecto de cristal */
+  background-color: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .home-menu-title {
@@ -32,6 +39,7 @@
 .home-menu-button {
   display: block;
   width: 100%;
+  box-sizing: border-box; /* Asegura que el padding no afecte el ancho */
   text-decoration: none;
   color: white;
   background-color: #007bff;
@@ -67,4 +75,17 @@
 
 .home-menu-button:last-child {
   margin-bottom: 0;
+}
+
+/* --- NUEVO: Media Queries para Responsividad --- */
+@media (max-width: 768px) {
+  .home-menu-content {
+    padding: 2rem;
+  }
+  .home-menu-title {
+    font-size: 2rem;
+  }
+  .home-menu-subtitle {
+    font-size: 1rem;
+  }
 }
