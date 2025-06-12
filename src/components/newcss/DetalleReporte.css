@@ -74,16 +74,21 @@
   background-color: #d9534f; 
   color: white; 
 }
+
+/* --- REGLA MODIFICADA --- */
 .report-image {
   display: block;
-  max-width: 400px;
-  width: 100%;
-  height: auto;
-  margin: 1rem auto;
+  width: auto; /* El ancho se ajusta a la altura para mantener la proporción */
+  max-width: 100%; /* Para que no se desborde en pantallas pequeñas */
+  height: 250px; /* Altura fija, similar a la de VerPeticiones pero un poco más grande */
+  margin: 1rem auto; /* Centra el bloque de la imagen */
+  object-fit: contain; /* La clave: se asegura que toda la imagen entre sin cortarse */
+  background-color: rgba(240, 242, 245, 0.5); /* Fondo suave por si sobran espacios */
   border-radius: 8px;
-  border: 1px solid #ddd;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem; /* Un pequeño padding interno */
+  box-sizing: border-box;
 }
+
 .image-section { 
   margin-top: 2rem; 
   border-top: 1px solid #eee; 
@@ -104,7 +109,7 @@
 .suggestion-item:hover { background-color: #f0f0f0; }
 .suggestion-item.add-new { color: #007bff; font-style: italic; }
 
-/* --- Media Queries para Responsividad --- */
+/* Media Queries para Responsividad */
 @media (max-width: 768px) {
   .form-grid {
     grid-template-columns: 1fr;
