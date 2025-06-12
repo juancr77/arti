@@ -4,6 +4,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { db, storage } from '../services/firebase';
 import { doc, getDoc, updateDoc, deleteDoc, Timestamp, collection, getDocs, addDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import './newcss/DetalleReporte.css'; 
 
 export default function DetalleReporte() {
   const { reporteId } = useParams();

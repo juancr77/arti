@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { collection, getDocs, doc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
+import './newcss/VerPeticiones.css'; 
 
 export default function VerPeticiones() {
   const [peticiones, setPeticiones] = useState([]);

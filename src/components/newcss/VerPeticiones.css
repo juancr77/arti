@@ -1,0 +1,61 @@
+.admin-container { 
+  max-width: 1400px; 
+  margin: 2rem auto; 
+  padding: 2rem; 
+}
+
+.admin-header { 
+  background-color: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex; 
+  flex-direction: column; 
+  gap: 1.5rem; 
+  margin-bottom: 2rem; 
+}
+
+/* ... (estilos de .header-top, .filter-controls, etc. que ya tenías) ... */
+
+.peticiones-grid { 
+  display: grid; 
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); 
+  gap: 1.5rem; 
+}
+
+.peticion-card { 
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px; 
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+  padding: 1.5rem; 
+  display: flex; 
+  flex-direction: column;
+  transition: transform 0.2s ease-in-out;
+}
+
+.peticion-card:hover {
+    transform: translateY(-5px);
+}
+
+/* ... (estilos de .peticion-card h3, p, strong, .card-actions, etc. que ya tenías) ... */
+
+/* Media Queries para Responsividad */
+@media (max-width: 1200px) {
+  .peticiones-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-container {
+    padding: 1rem;
+  }
+  .peticiones-grid {
+    grid-template-columns: 1fr; /* Una sola columna en móvil */
+  }
+}

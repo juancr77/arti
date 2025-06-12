@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { db, storage } from '../../services/firebase';
 import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import './FormularioPeticion.css'; 
 
 // --- Icono de Spinner (SVG simple) ---
 const SpinnerIcon = () => (
