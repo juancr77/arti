@@ -1,5 +1,3 @@
-// src/components/VerPeticiones.js
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../services/firebase';
@@ -117,37 +115,6 @@ export default function VerPeticiones() {
 
   return (
     <>
-      <style>{`
-        .admin-container { max-width: 1200px; margin: 2rem auto; padding: 2rem; font-family: sans-serif; }
-        .admin-header { display: flex; flex-direction: column; gap: 1.5rem; border-bottom: 2px solid #eee; padding-bottom: 1rem; margin-bottom: 2rem; }
-        .header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        .admin-title { color: #333; }
-        .back-link { text-decoration: none; background-color: #f0f0f0; padding: 0.5rem 1rem; border-radius: 6px; color: #333; font-weight: 500; }
-        .filter-controls { display: flex; flex-wrap: wrap; gap: 1rem; width: 100%; }
-        .filter-controls select, .filter-controls input { padding: 0.6rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
-        .filter-controls input { flex-grow: 1; min-width: 200px; }
-        .peticiones-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 2rem; }
-        .peticion-card { background-color: #fff; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); padding: 1.5rem; display: flex; flex-direction: column; }
-        .peticion-card h3 { margin-top: 0; color: #0056b3; }
-        .peticion-card .estatus { font-weight: bold; padding: 0.2rem 0.5rem; border-radius: 4px; color: white; display: inline-block; margin-bottom: 1rem; text-transform: capitalize; }
-        .estatus-pendiente { background-color: #f0ad4e; }
-        .estatus-en\\.proceso { background-color: #337ab7; }
-        .estatus-resuelta { background-color: #5cb85c; }
-        .estatus-no\\.procede { background-color: #777; }
-        .peticion-card p { margin: 0.5rem 0; line-height: 1.5; color: #555; }
-        .peticion-card strong { color: #333; }
-        .peticion-image { width: 100%; height: auto; border-radius: 6px; margin-top: 1rem; border: 1px solid #eee; }
-        .card-actions { margin-top: auto; padding-top: 1rem; border-top: 1px solid #eee; display: flex; gap: 0.5rem; justify-content: flex-end; }
-        .action-button { border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .edit-button { background-color: #337ab7; color: white; }
-        .detail-button { background-color: #5bc0de; color: white; text-decoration: none; display: inline-flex; align-items: center; }
-        .delete-button { background-color: #d9534f; color: white; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; }
-        .modal-actions { text-align: right; margin-top: 1.5rem; }
-        .loading-container, .no-reportes { text-align: center; padding: 4rem; font-size: 1.5rem; color: #777; }
-      `}</style>
-      
       <div className="admin-container">
         <div className="admin-header">
           <div className="header-top">

@@ -11,7 +11,7 @@ import DetalleReporte from './components/DetalleReporte.js';
 import Dashboard from './components/Dashboard/Dashboard.js';
 
 // Estilos globales si los tienes
-import './App.css'; 
+// import './App.css'; 
 
 export default function App() {
   return (

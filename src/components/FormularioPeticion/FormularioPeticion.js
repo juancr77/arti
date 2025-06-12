@@ -16,7 +16,7 @@ const SpinnerIcon = () => (
 // --- Componente con el nombre correcto ---
 export default function FormularioPeticion() {
 
-  // Función para obtener la fecha de hoy en formato YYYY-MM-DD
+  // Función para obtener la fecha de hoy en formato yyyy-MM-dd
   const getTodayDateString = () => {
     const today = new Date();
     const yyyy = today.getFullYear();
@@ -32,12 +32,12 @@ export default function FormularioPeticion() {
     apellidoMaterno: '',
     telefono: '',
     localidad: '',
-    direccion: '', // NUEVO
+    direccion: '',
     estructura: 'no',
     origenReporte: '',
     peticion: '',
     hora: '',
-    fechaReporte: getTodayDateString(), // NUEVO
+    fechaReporte: getTodayDateString(),
   });
   const [ineFile, setIneFile] = useState(null);
   const [ineFileName, setIneFileName] = useState('');
@@ -50,7 +50,7 @@ export default function FormularioPeticion() {
   const [isLocalidadListOpen, setIsLocalidadListOpen] = useState(false);
   const localidadDropdownRef = useRef(null);
 
-  // NUEVO: Estados para la búsqueda de direcciones
+  // Estados para la búsqueda de direcciones
   const [direccionesOptions, setDireccionesOptions] = useState([]);
   const [direccionSearchTerm, setDireccionSearchTerm] = useState("");
   const [isDireccionListOpen, setIsDireccionListOpen] = useState(false);
@@ -74,7 +74,7 @@ export default function FormularioPeticion() {
     fetchLocalidades();
   }, []); 
 
-  // NUEVO: Cargar direcciones al inicio
+  // Cargar direcciones al inicio
   useEffect(() => {
     const fetchDirecciones = async () => {
       try {
@@ -103,7 +103,7 @@ export default function FormularioPeticion() {
     };
   }, [localidadDropdownRef]);
 
-  // NUEVO: Cerrar el dropdown de dirección si se hace clic fuera de él
+  // Cerrar el dropdown de dirección si se hace clic fuera de él
   useEffect(() => {
     function handleClickOutside(event) {
       if (direccionDropdownRef.current && !direccionDropdownRef.current.contains(event.target)) {
@@ -135,14 +135,12 @@ export default function FormularioPeticion() {
     setLocalidadSearchTerm("");
   };
 
-  // NUEVO: Handler para seleccionar dirección
   const handleDireccionSelect = (selectedDireccion) => {
     setFormData(prevData => ({ ...prevData, direccion: selectedDireccion }));
     setIsDireccionListOpen(false);
     setDireccionSearchTerm("");
   };
 
-  // MODIFICADO: handleSubmit para incluir los nuevos campos
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.localidad || !formData.direccion || !formData.fechaReporte) {
@@ -174,8 +172,8 @@ export default function FormularioPeticion() {
         peticion: formData.peticion,
         hora: formData.hora,
         ineURL: ineURL,
-        fecha: new Date(`${formData.fechaReporte}T${formData.hora || '00:00:00'}`), // Combina fecha y hora seleccionadas
-        fechaCreacion: serverTimestamp(), // Fecha en que se guarda en la BD
+        fecha: new Date(`${formData.fechaReporte}T${formData.hora || '00:00:00'}`),
+        fechaCreacion: serverTimestamp(),
         estatus: 'pendiente', 
       };
       
@@ -209,41 +207,6 @@ export default function FormularioPeticion() {
 
   return (
     <>
-      <style>{`
-        .searchable-dropdown { position: relative; }
-        .dropdown-toggle { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; text-align: left; background-color: white; cursor: pointer; }
-        .dropdown-toggle.placeholder { color: #6c757d; }
-        .suggestions-list { position: absolute; background-color: white; border: 1px solid #ddd; border-radius: 6px; width: 100%; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        .suggestion-search-input { width: 100%; padding: 0.75rem; border: none; border-bottom: 1px solid #ddd; border-radius: 6px 6px 0 0; font-size: 1rem; box-sizing: border-box; }
-        .suggestion-items-container { max-height: 200px; overflow-y: auto; }
-        .suggestion-item { padding: 10px; cursor: pointer; color: #333; }
-        .suggestion-item:hover { background-color: #f0f0f0; }
-        .suggestion-item.add-new { color: #007bff; font-style: italic; }
-        .form-peticion-container { max-width: 800px; margin: 2rem auto; padding: 2rem; background-color: #f9f9f9; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; }
-        .form-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 1px solid #eee; padding-bottom: 1rem; }
-        .form-title { text-align: left; margin-bottom: 0; }
-        .back-link { text-decoration: none; background-color: #f0f0f0; padding: 0.5rem 1rem; border-radius: 6px; color: #333; font-weight: 500; border: 1px solid #ddd; }
-        .back-link:hover { background-color: #e2e6ea; }
-        .peticion-form .form-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
-        @media (min-width: 768px) { .peticion-form .form-grid { grid-template-columns: repeat(2, 1fr); } }
-        .form-column { display: flex; flex-direction: column; gap: 1rem; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-group label { margin-bottom: 0.5rem; color: #555; font-weight: 500; }
-        .form-input, .form-select, .form-textarea, .form-file-input { width: 100%; padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
-        .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25); }
-        .form-textarea { resize: vertical; min-height: 80px; }
-        .radio-group { display: flex; gap: 1rem; align-items: center; margin-top: 0.3rem; }
-        .radio-label { display: flex; align-items: center; gap: 0.3rem; font-weight: normal; }
-        .file-name-display { font-size: 0.85rem; color: #666; margin-top: 0.5rem; }
-        .form-actions { margin-top: 2rem; text-align: center; }
-        .submit-button { background-color: #007bff; color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 6px; font-size: 1.1rem; font-weight: 500; cursor: pointer; }
-        .spinner-icon { animation: rotate 1s linear infinite; width: 1.2em; height: 1.2em; margin-right: 0.5em; }
-        .message-display { padding: 0.8rem 1rem; margin-top: 1.5rem; border-radius: 6px; text-align: center; }
-        .message-display.success { background-color: #d4edda; color: #155724; }
-        .message-display.error { background-color: #f8d7da; color: #721c24; }
-        .full-width-group { grid-column: 1 / -1; }
-      `}</style>
-      
       <div className="form-peticion-container">
         <div className="form-header">
           <h2 className="form-title">Registrar un Nuevo Reporte</h2>

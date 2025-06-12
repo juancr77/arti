@@ -1,8 +1,6 @@
-// src/components/HomePage.js
-
 import React from 'react';
-// --- LÍNEA IMPORTANTE AÑADIDA/CORREGIDA ---
 import { Link } from 'react-router-dom'; 
+// import './HomePage.css'; 
 
 const HomePage = () => {
   return (
