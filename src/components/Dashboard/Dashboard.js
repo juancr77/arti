@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../../services/firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
-import ExcelJS from 'exceljs'; // <-- 1. Importamos la nueva librería
-import { saveAs } from 'file-saver'; // <-- 2. Y su complemento para guardar archivos
+import ExcelJS from 'exceljs';
+import { saveAs } from 'file-saver';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -16,7 +16,7 @@ export default function Dashboard() {
   const [filtroDireccion, setFiltroDireccion] = useState('todas');
   const [direccionesOptions, setDireccionesOptions] = useState([]);
 
-  // La lógica de carga y filtrado de datos no cambia...
+  // La lógica de carga y filtrado no cambia
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -24,9 +24,11 @@ export default function Dashboard() {
         const peticionesSnapshot = await getDocs(peticionesQuery);
         const listaPeticiones = peticionesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setAllPeticiones(listaPeticiones);
+
         const direccionesSnapshot = await getDocs(collection(db, "direcciones"));
         const listaDirecciones = direccionesSnapshot.docs.map(doc => doc.data().nombre).sort();
         setDireccionesOptions(listaDirecciones);
+
       } catch (error) {
         console.error("Error al obtener los datos: ", error);
       } finally {
@@ -40,6 +42,7 @@ export default function Dashboard() {
     const peticionesFiltradas = filtroDireccion === 'todas'
       ? allPeticiones
       : allPeticiones.filter(p => p.direccion === filtroDireccion);
+    
     const pendientesArr = [], enProcesoArr = [], resueltasArr = [];
     peticionesFiltradas.forEach((reporte) => {
       switch (reporte.estatus) {
@@ -54,7 +57,6 @@ export default function Dashboard() {
     setResueltas(resueltasArr);
   }, [allPeticiones, filtroDireccion]);
 
-  // --- 3. FUNCIÓN DE EXPORTACIÓN COMPLETAMENTE REESCRITA ---
   const handleExportToExcel = async () => {
     const dataToExport = [...pendientes, ...enProceso, ...resueltas];
     if (dataToExport.length === 0) {
@@ -65,7 +67,6 @@ export default function Dashboard() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Reportes");
 
-    // Definir las columnas y sus cabeceras
     worksheet.columns = [
       { header: 'Nombre Completo', key: 'nombre', width: 30 },
       { header: 'Teléfono', key: 'telefono', width: 15 },
@@ -78,22 +79,20 @@ export default function Dashboard() {
       { header: 'Enlace a Imagen', key: 'imagen', width: 30 },
     ];
 
-    // Estilo para el encabezado
     const headerRow = worksheet.getRow(1);
     headerRow.eachCell((cell) => {
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FF2E7D32' } // Verde oscuro
+        fgColor: { argb: 'FF2E7D32' }
       };
       cell.font = {
-        color: { argb: 'FFFFFFFF' }, // Letra blanca
+        color: { argb: 'FFFFFFFF' },
         bold: true
       };
       cell.alignment = { vertical: 'middle', horizontal: 'center' };
     });
 
-    // Formatear y añadir los datos
     const formattedData = dataToExport.map(reporte => ({
       nombre: `${reporte.nombres} ${reporte.apellidoPaterno} ${reporte.apellidoMaterno}`,
       telefono: reporte.telefono,
@@ -107,14 +106,16 @@ export default function Dashboard() {
     }));
     worksheet.addRows(formattedData);
 
-    // Aplicar estilos condicionales a la columna de estatus
+    // --- SECCIÓN DE COLORES MODIFICADA ---
     worksheet.eachRow({ includeEmpty: false }, function (row, rowNumber) {
-      if (rowNumber > 1) { // Omitir la fila del encabezado
+      if (rowNumber > 1) {
         const statusCell = row.getCell('estatus');
         let fillColor = 'FFFFFFFF'; // Blanco por defecto
-        if (statusCell.value === 'pendiente') fillColor = 'FFFFEBEE'; // Rojo claro
-        if (statusCell.value === 'en proceso') fillColor = 'FFFFF8E1'; // Ámbar claro
-        if (statusCell.value === 'resuelta') fillColor = 'FFE8F5E9'; // Verde claro
+        
+        // Usamos colores más intensos pero aún adecuados para fondo
+        if (statusCell.value === 'pendiente') fillColor = 'FFFFCDD2';  // Rojo más intenso
+        if (statusCell.value === 'en proceso') fillColor = 'FFFFECB3'; // Ámbar más intenso
+        if (statusCell.value === 'resuelta') fillColor = 'FFC8E6C9';   // Verde más intenso
         
         statusCell.fill = {
           type: 'pattern',
@@ -124,7 +125,6 @@ export default function Dashboard() {
       }
     });
 
-    // Generar el archivo y descargarlo
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     saveAs(blob, 'ReportesDashboard.xlsx');
