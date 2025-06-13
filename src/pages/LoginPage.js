@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import './LoginPage.css'; // Crearemos este archivo de estilos a continuación
+import './LoginPage.css';
 
 export default function LoginPage() {
+  // --- SECCIÓN DE LÓGICA Y ESTADO (Probablemente la que faltaba) ---
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -18,12 +19,13 @@ export default function LoginPage() {
       setError('');
       setLoading(true);
       await login(email, password);
-      navigate('/dashboard'); // Redirige al dashboard después del login
+      navigate('/'); // Te lleva a la página de inicio después del login
     } catch {
       setError('Error al iniciar sesión. Verifica tus credenciales.');
     }
     setLoading(false);
   }
+  // --- FIN DE LA SECCIÓN DE LÓGICA ---
 
   return (
     <div className="login-container">
