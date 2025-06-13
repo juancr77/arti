@@ -9,24 +9,27 @@ import VerPeticiones from './components/VerPeticiones.js';
 import DetalleReporte from './components/DetalleReporte.js';
 import Dashboard from './components/Dashboard/Dashboard.js';
 import ProtectedRoute from './components/ProtectedRoute';
-import MainLayout from './components/MainLayout'; // <-- Importamos el Layout
+import MainLayout from './components/MainLayout';
 
 import './App.css'; 
 
 export default function App() {
   return (
     <Routes>
-      {/* Ruta pública para el Login */}
+      {/* Ruta pública para el Login, no usa el MainLayout para no tener doble Navbar */}
       <Route path="/login" element={<LoginPage />} />
       
-      {/* --- NUEVA ESTRUCTURA DE RUTAS PROTEGIDAS --- */}
-      <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
-        {/* Todas las rutas aquí dentro estarán protegidas y usarán la Navbar */}
+      {/* --- NUEVA ESTRUCTURA --- */}
+      {/* Todas las demás páginas usan el MainLayout para tener la Navbar fija */}
+      <Route element={<MainLayout />}>
+        {/* HomePage es ahora la ruta principal y es PÚBLICA */}
         <Route path="/" element={<HomePage />} />
-        <Route path="/nuevo-reporte" element={<FormularioPeticion />} />
-        <Route path="/ver-reportes" element={<VerPeticiones />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/reporte/:reporteId" element={<DetalleReporte />} />
+        
+        {/* El resto de las rutas están anidadas y PROTEGIDAS */}
+        <Route path="/nuevo-reporte" element={<ProtectedRoute><FormularioPeticion /></ProtectedRoute>} />
+        <Route path="/ver-reportes" element={<ProtectedRoute><VerPeticiones /></ProtectedRoute>} />
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        <Route path="/reporte/:reporteId" element={<ProtectedRoute><DetalleReporte /></ProtectedRoute>} />
       </Route>
     </Routes>
   );
