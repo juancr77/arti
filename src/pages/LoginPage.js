@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import './LoginPage.css';
+import './LoginPage.css'; // Importamos la hoja de estilos
 
 export default function LoginPage() {
-  // --- SECCIÓN DE LÓGICA Y ESTADO (Probablemente la que faltaba) ---
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -19,19 +18,29 @@ export default function LoginPage() {
       setError('');
       setLoading(true);
       await login(email, password);
-      navigate('/'); // Te lleva a la página de inicio después del login
+      navigate('/');
     } catch {
       setError('Error al iniciar sesión. Verifica tus credenciales.');
     }
     setLoading(false);
   }
-  // --- FIN DE LA SECCIÓN DE LÓGICA ---
 
   return (
     <div className="login-container">
       <div className="login-box">
         <h1 className="login-title">Bienvenido(a) al sistema de reportes Arti</h1>
+        
+        {/* --- ESTRUCTURA CORRECTA PARA LA IMAGEN --- */}
+        <div className="login-image-container">
+            <img 
+                src="https://i.imgur.com/5mavo8r.png" 
+                alt="Logo Arti" 
+                className="login-logo"
+            />
+        </div>
+
         {error && <p className="login-error">{error}</p>}
+
         <form onSubmit={handleSubmit}>
           <div className="input-group">
             <label htmlFor="email">Correo Electrónico</label>

@@ -16,20 +16,20 @@ import './App.css';
 export default function App() {
   return (
     <Routes>
-      {/* Ruta pública para el Login, no usa el MainLayout para no tener doble Navbar */}
+      {/* Ruta pública para el Login. Si no se ha iniciado sesión, esta es la única accesible. */}
       <Route path="/login" element={<LoginPage />} />
       
-      {/* --- NUEVA ESTRUCTURA --- */}
-      {/* Todas las demás páginas usan el MainLayout para tener la Navbar fija */}
-      <Route element={<MainLayout />}>
-        {/* HomePage es ahora la ruta principal y es PÚBLICA */}
-        <Route path="/" element={<HomePage />} />
+      {/* El resto de la aplicación está protegida. Si no hay sesión, redirige a /login */}
+      <Route path="/" element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         
-        {/* El resto de las rutas están anidadas y PROTEGIDAS */}
-        <Route path="/nuevo-reporte" element={<ProtectedRoute><FormularioPeticion /></ProtectedRoute>} />
-        <Route path="/ver-reportes" element={<ProtectedRoute><VerPeticiones /></ProtectedRoute>} />
-        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/reporte/:reporteId" element={<ProtectedRoute><DetalleReporte /></ProtectedRoute>} />
+        {/* La ruta 'index' es la que se muestra por defecto en '/' si se tiene sesión */}
+        <Route index element={<HomePage />} />
+        
+        {/* El resto de las rutas anidadas que usarán la Navbar */}
+        <Route path="nuevo-reporte" element={<FormularioPeticion />} />
+        <Route path="ver-reportes" element={<VerPeticiones />} />
+        <Route path="dashboard" element={<Dashboard />} />
+        <Route path="reporte/:reporteId" element={<DetalleReporte />} />
       </Route>
     </Routes>
   );

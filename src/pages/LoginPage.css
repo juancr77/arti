@@ -6,6 +6,7 @@
   padding: 2rem;
   box-sizing: border-box;
 }
+
 .login-box {
   width: 100%;
   max-width: 400px;
@@ -17,11 +18,26 @@
   -webkit-backdrop-filter: blur(10px);
   text-align: center;
 }
+
 .login-title {
   font-size: 1.5rem;
   color: #333;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem; /* Ajuste de margen */
 }
+
+/* --- NUEVAS REGLAS PARA LA IMAGEN --- */
+.login-image-container {
+  margin-block: 1.5rem; /* Margen arriba y abajo */
+}
+
+.login-logo {
+  max-width: 200px; /* Tamaño de la imagen */
+  height: auto;
+  display: block;
+  margin-inline: auto; /* Centrado horizontal */
+}
+/* --- FIN DE NUEVAS REGLAS --- */
+
 .login-error {
   background-color: #f8d7da;
   color: #721c24;
@@ -29,16 +45,19 @@
   border-radius: 6px;
   margin-bottom: 1rem;
 }
+
 .input-group {
   margin-bottom: 1.5rem;
   text-align: left;
 }
+
 .input-group label {
   display: block;
   margin-bottom: 0.5rem;
   font-weight: 500;
   color: #495057;
 }
+
 .input-group input {
   width: 100%;
   padding: 0.75rem;
@@ -47,6 +66,7 @@
   font-size: 1rem;
   box-sizing: border-box;
 }
+
 .login-button {
   width: 100%;
   padding: 0.8rem;
@@ -59,9 +79,11 @@
   cursor: pointer;
   transition: background-color 0.2s;
 }
+
 .login-button:hover {
   background-color: #0056b3;
 }
+
 .login-button:disabled {
   background-color: #a0cfff;
 }
