@@ -1,12 +1,14 @@
-// src/components/VerPeticiones.js
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { collection, getDocs, doc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
+import { useAuth } from '../context/AuthContext'; // <-- 1. Importamos el hook
 import './newcss/VerPeticiones.css'; 
 
 export default function VerPeticiones() {
+  // --- 2. Usamos el hook para obtener el estado del usuario ---
+  const { currentUser } = useAuth();
+
   const [peticiones, setPeticiones] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [peticionesFiltradas, setPeticionesFiltradas] = useState([]);
@@ -20,6 +22,7 @@ export default function VerPeticiones() {
   const [peticionActual, setPeticionActual] = useState(null);
   const [nuevoEstatus, setNuevoEstatus] = useState('');
 
+  // El resto de la lógica de carga y filtrado no cambia
   useEffect(() => {
     const fetchPeticiones = async () => {
       try {
@@ -33,7 +36,6 @@ export default function VerPeticiones() {
         setIsLoading(false);
       }
     };
-
     const fetchDirecciones = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, "direcciones"));
@@ -43,7 +45,6 @@ export default function VerPeticiones() {
         console.error("Error cargando direcciones: ", error);
       }
     };
-
     fetchPeticiones();
     fetchDirecciones();
   }, []);
@@ -74,15 +75,10 @@ export default function VerPeticiones() {
   const handleUpdateStatus = async (e) => {
     e.preventDefault();
     if (!peticionActual) return;
-    
     const peticionDocRef = doc(db, 'peticiones', peticionActual.id);
     try {
       await updateDoc(peticionDocRef, { estatus: nuevoEstatus });
-      
-      setPeticiones(peticiones.map(p => 
-        p.id === peticionActual.id ? { ...p, estatus: nuevoEstatus } : p
-      ));
-      
+      setPeticiones(peticiones.map(p => p.id === peticionActual.id ? { ...p, estatus: nuevoEstatus } : p));
       setIsModalOpen(false);
       setPeticionActual(null);
       alert("Estatus actualizado con éxito.");
@@ -102,7 +98,6 @@ export default function VerPeticiones() {
         <div className="admin-header">
           <div className="header-top">
             <h1 className="admin-title">Administrar Reportes</h1>
-            {/* --- SECCIÓN MODIFICADA --- */}
             <div>
               <Link to="/dashboard" className="action-button detail-button" style={{ marginRight: '1rem' }}>Ir al Dashboard</Link>
               <Link to="/" className="back-link">Volver al Inicio</Link>
@@ -142,12 +137,17 @@ export default function VerPeticiones() {
               <p><strong>Petición:</strong> {p.peticion}</p>
               <p><strong>Fecha:</strong> {p.fecha ? new Date(p.fecha.seconds * 1000).toLocaleString() : 'N/A'}</p>
               {p.ineURL && (
-                <a href={p.ineURL} target="_blank" rel="noopener noreferrer">
-                  <img src={p.ineURL} alt={`Identificación de ${p.nombres}`} className="peticion-image" />
-                </a>
+                <div className="image-frame">
+                    <a href={p.ineURL} target="_blank" rel="noopener noreferrer">
+                        <img src={p.ineURL} alt={`Identificación de ${p.nombres}`} className="peticion-image" />
+                    </a>
+                </div>
               )}
               <div className="card-actions">
-                <button onClick={() => abrirModalEdicion(p)} className="action-button edit-button">Editar Estatus</button>
+                {/* --- 3. Botón de Editar Estatus protegido --- */}
+                {currentUser && (
+                  <button onClick={() => abrirModalEdicion(p)} className="action-button edit-button">Editar Estatus</button>
+                )}
                 <Link to={`/reporte/${p.id}`} className="action-button detail-button">
                   Ver Detalle
                 </Link>
@@ -184,7 +184,10 @@ export default function VerPeticiones() {
               </div>
               <div className="modal-actions">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="action-button cancel-button">Cancelar</button>
-                <button type="submit" className="action-button edit-button">Guardar Cambios</button>
+                {/* --- 4. Botón de Guardar en Modal también protegido --- */}
+                {currentUser && (
+                  <button type="submit" className="action-button edit-button">Guardar Cambios</button>
+                )}
               </div>
             </form>
           </div>
