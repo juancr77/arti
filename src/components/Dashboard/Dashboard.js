@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-// El hook 'useNavigate' ya no es necesario, solo 'Link'
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { db } from '../../services/firebase';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import ExcelJS from 'exceljs'; // <-- 1. Importamos la nueva librería
+import { saveAs } from 'file-saver'; // <-- 2. Y su complemento para guardar archivos
 import './Dashboard.css';
 
 export default function Dashboard() {
-  // El código de estados y efectos no cambia
+  const navigate = useNavigate();
   const [allPeticiones, setAllPeticiones] = useState([]);
   const [pendientes, setPendientes] = useState([]);
   const [enProceso, setEnProceso] = useState([]);
@@ -15,6 +16,7 @@ export default function Dashboard() {
   const [filtroDireccion, setFiltroDireccion] = useState('todas');
   const [direccionesOptions, setDireccionesOptions] = useState([]);
 
+  // La lógica de carga y filtrado de datos no cambia...
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -22,11 +24,9 @@ export default function Dashboard() {
         const peticionesSnapshot = await getDocs(peticionesQuery);
         const listaPeticiones = peticionesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         setAllPeticiones(listaPeticiones);
-
         const direccionesSnapshot = await getDocs(collection(db, "direcciones"));
         const listaDirecciones = direccionesSnapshot.docs.map(doc => doc.data().nombre).sort();
         setDireccionesOptions(listaDirecciones);
-
       } catch (error) {
         console.error("Error al obtener los datos: ", error);
       } finally {
@@ -40,31 +40,95 @@ export default function Dashboard() {
     const peticionesFiltradas = filtroDireccion === 'todas'
       ? allPeticiones
       : allPeticiones.filter(p => p.direccion === filtroDireccion);
-    
-    const pendientesArr = [];
-    const enProcesoArr = [];
-    const resueltasArr = [];
-
+    const pendientesArr = [], enProcesoArr = [], resueltasArr = [];
     peticionesFiltradas.forEach((reporte) => {
       switch (reporte.estatus) {
-        case 'pendiente':
-          pendientesArr.push(reporte);
-          break;
-        case 'en proceso':
-          enProcesoArr.push(reporte);
-          break;
-        case 'resuelta':
-          resueltasArr.push(reporte);
-          break;
-        default:
-          break;
+        case 'pendiente': pendientesArr.push(reporte); break;
+        case 'en proceso': enProcesoArr.push(reporte); break;
+        case 'resuelta': resueltasArr.push(reporte); break;
+        default: break;
       }
     });
-
     setPendientes(pendientesArr);
     setEnProceso(enProcesoArr);
     setResueltas(resueltasArr);
   }, [allPeticiones, filtroDireccion]);
+
+  // --- 3. FUNCIÓN DE EXPORTACIÓN COMPLETAMENTE REESCRITA ---
+  const handleExportToExcel = async () => {
+    const dataToExport = [...pendientes, ...enProceso, ...resueltas];
+    if (dataToExport.length === 0) {
+      alert("No hay datos para exportar.");
+      return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Reportes");
+
+    // Definir las columnas y sus cabeceras
+    worksheet.columns = [
+      { header: 'Nombre Completo', key: 'nombre', width: 30 },
+      { header: 'Teléfono', key: 'telefono', width: 15 },
+      { header: 'Fecha del Reporte', key: 'fecha', width: 22 },
+      { header: 'Estatus', key: 'estatus', width: 15 },
+      { header: 'Dirección', key: 'direccion', width: 25 },
+      { header: 'Localidad', key: 'localidad', width: 25 },
+      { header: 'Origen', key: 'origen', width: 15 },
+      { header: 'Petición Completa', key: 'peticion', width: 60 },
+      { header: 'Enlace a Imagen', key: 'imagen', width: 30 },
+    ];
+
+    // Estilo para el encabezado
+    const headerRow = worksheet.getRow(1);
+    headerRow.eachCell((cell) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FF2E7D32' } // Verde oscuro
+      };
+      cell.font = {
+        color: { argb: 'FFFFFFFF' }, // Letra blanca
+        bold: true
+      };
+      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    });
+
+    // Formatear y añadir los datos
+    const formattedData = dataToExport.map(reporte => ({
+      nombre: `${reporte.nombres} ${reporte.apellidoPaterno} ${reporte.apellidoMaterno}`,
+      telefono: reporte.telefono,
+      fecha: reporte.fecha ? new Date(reporte.fecha.seconds * 1000) : null,
+      estatus: reporte.estatus,
+      direccion: reporte.direccion,
+      localidad: reporte.localidad,
+      origen: reporte.origenReporte,
+      peticion: reporte.peticion,
+      imagen: reporte.ineURL ? { text: 'Ver Imagen', hyperlink: reporte.ineURL } : 'No adjunta'
+    }));
+    worksheet.addRows(formattedData);
+
+    // Aplicar estilos condicionales a la columna de estatus
+    worksheet.eachRow({ includeEmpty: false }, function (row, rowNumber) {
+      if (rowNumber > 1) { // Omitir la fila del encabezado
+        const statusCell = row.getCell('estatus');
+        let fillColor = 'FFFFFFFF'; // Blanco por defecto
+        if (statusCell.value === 'pendiente') fillColor = 'FFFFEBEE'; // Rojo claro
+        if (statusCell.value === 'en proceso') fillColor = 'FFFFF8E1'; // Ámbar claro
+        if (statusCell.value === 'resuelta') fillColor = 'FFE8F5E9'; // Verde claro
+        
+        statusCell.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: fillColor }
+        };
+      }
+    });
+
+    // Generar el archivo y descargarlo
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    saveAs(blob, 'ReportesDashboard.xlsx');
+  };
 
   const ReporteCard = ({ reporte }) => (
     <Link to={`/reporte/${reporte.id}`} className="dashboard-card">
@@ -86,14 +150,13 @@ export default function Dashboard() {
       <div className="dashboard-header">
         <div className="header-top">
           <h1>Dashboard de Seguimiento</h1>
-          {/* --- SECCIÓN DE BOTONES MODIFICADA --- */}
           <div className="header-actions">
-            <Link to="/ver-reportes" className="action-button reports-button">
-              Ir a Reportes
-            </Link>
-            <Link to="/" className="action-button home-button">
-              Ir al Inicio
-            </Link>
+            <button onClick={handleExportToExcel} className="action-button export-button">
+              Bajar Excel
+            </button>
+            <button onClick={() => navigate(-1)} className="back-button">
+              ← Volver
+            </button>
           </div>
         </div>
         <div className="filter-controls">
