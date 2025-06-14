@@ -75,49 +75,113 @@ export default function Dashboard() {
       alert("No hay datos para exportar.");
       return;
     }
+
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Reportes");
-    worksheet.columns = [
-      { header: 'Nombre Completo', key: 'nombre', width: 30 },
-      { header: 'Teléfono', key: 'telefono', width: 15 },
-      { header: 'Fecha del Reporte', key: 'fecha', width: 22 },
-      { header: 'Estatus', key: 'estatus', width: 15 },
-      { header: 'Dirección', key: 'direccion', width: 25 },
-      { header: 'Localidad', key: 'localidad', width: 25 },
-      { header: 'Origen', key: 'origen', width: 15 },
-      { header: 'Petición Completa', key: 'peticion', width: 60 },
-      { header: 'Enlace a Imagen', key: 'imagen', width: 30 },
+
+    // --- NUEVO: CONFIGURACIÓN DE PÁGINA PARA IMPRESIÓN ---
+    worksheet.pageSetup = {
+      paperSize: 9, // 9 = Letter
+      orientation: 'landscape',
+      fitToPage: true,
+      fitToWidth: 1,
+      fitToHeight: 0 // Permite que se extienda a varias páginas de alto
+    };
+
+    // Logo
+    try {
+      const response = await fetch('https://i.imgur.com/5mavo8r.png');
+      const imageBuffer = await response.arrayBuffer();
+      const imageId = workbook.addImage({ buffer: imageBuffer, extension: 'png' });
+      worksheet.addImage(imageId, 'A1:B4');
+    } catch (error) {
+      console.error("No se pudo cargar la imagen del logo para el Excel:", error);
+    }
+    
+    // Título Principal
+    worksheet.mergeCells('C1:J4');
+    const titleCell = worksheet.getCell('C1');
+    titleCell.value = 'Reporte General del Sistema Arti';
+    titleCell.font = { name: 'Arial Black', size: 18, bold: true, color: { argb: 'FF333333' } };
+    titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
+    
+    // Fila vacía para espaciar
+    worksheet.addRow([]);
+
+    // --- CORRECCIÓN: CONSTRUIR LA FILA DE ENCABEZADOS MANUALMENTE ---
+    const headers = [
+      'Nombre Completo', 'Teléfono', 'Fecha', 'Hora', 'Estatus', 
+      'Dirección', 'Localidad', 'Origen', 'Petición Completa', 'Enlace a Imagen'
     ];
-    const headerRow = worksheet.getRow(1);
+    // Se obtiene la fila 6 y se le asignan los valores
+    const headerRow = worksheet.getRow(6);
+    headerRow.values = headers;
+    
+    // Estilo para la fila de encabezados
     headerRow.eachCell((cell) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E7D32' } };
       cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
-      cell.alignment = { vertical: 'middle', horizontal: 'center' };
+      cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
+      cell.border = {
+        top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
+      };
     });
-    const formattedData = dataToExport.map(reporte => ({
-      nombre: `${reporte.nombres} ${reporte.apellidoPaterno} ${reporte.apellidoMaterno}`,
-      telefono: reporte.telefono,
-      fecha: reporte.fecha ? new Date(reporte.fecha.seconds * 1000) : null,
-      estatus: reporte.estatus,
-      direccion: reporte.direccion,
-      localidad: reporte.localidad,
-      origen: reporte.origenReporte,
-      peticion: reporte.peticion,
-      imagen: reporte.ineURL ? { text: 'Ver Imagen', hyperlink: reporte.ineURL } : 'No adjunta'
-    }));
+    
+    // Anchos de columna fijos
+    worksheet.getColumn('A').width = 30; // Nombre
+    worksheet.getColumn('B').width = 15; // Telefono
+    worksheet.getColumn('C').width = 12; // Fecha
+    worksheet.getColumn('D').width = 10; // Hora
+    worksheet.getColumn('E').width = 15; // Estatus
+    worksheet.getColumn('F').width = 25; // Dirección
+    worksheet.getColumn('G').width = 25; // Localidad
+    worksheet.getColumn('H').width = 15; // Origen
+    worksheet.getColumn('I').width = 50; // Petición
+    worksheet.getColumn('J').width = 20; // Enlace
+    
+    // Añadir los datos
+    const formattedData = dataToExport.map(reporte => ([
+      `${reporte.nombres || ''} ${reporte.apellidoPaterno || ''} ${reporte.apellidoMaterno || ''}`,
+      reporte.telefono,
+      reporte.fecha ? new Date(reporte.fecha.seconds * 1000).toLocaleDateString() : 'N/A',
+      reporte.hora || 'N/A',
+      reporte.estatus,
+      reporte.direccion,
+      reporte.localidad,
+      reporte.origenReporte,
+      reporte.peticion,
+      reporte.ineURL ? { text: 'Ver Imagen', hyperlink: reporte.ineURL } : 'No adjunta'
+    ]));
     worksheet.addRows(formattedData);
+
+    // Aplicar estilos a las celdas de datos
     worksheet.eachRow({ includeEmpty: false }, function (row, rowNumber) {
-      if (rowNumber > 1) {
-        const statusCell = row.getCell('estatus');
-        let fillColor = 'FFFFFFFF';
-        if (statusCell.value === 'pendiente') fillColor = 'FFFFCDD2';
-        if (statusCell.value === 'en proceso') fillColor = 'FFFFECB3';
-        if (statusCell.value === 'resuelta') fillColor = 'FFC8E6C9';
-        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+      if (rowNumber > 6) { // La data empieza en la fila 7
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          cell.alignment = { wrapText: true, vertical: 'top', horizontal: 'left' };
+          cell.border = {
+            top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
+          };
+          // Centrar texto en columnas específicas
+          if(['B','C','D','E'].includes(worksheet.getColumn(colNumber).letter)) {
+            cell.alignment.horizontal = 'center';
+          }
+        });
+
+        const statusCell = row.getCell('E');
+        if (statusCell.value) {
+            let fillColor = 'FFFFFFFF';
+            if (statusCell.value === 'pendiente') fillColor = 'FFFFCDD2';
+            if (statusCell.value === 'en proceso') fillColor = 'FFFFECB3';
+            if (statusCell.value === 'resuelta') fillColor = 'FFC8E6C9';
+            statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
+        }
       }
     });
+
+    // Generar y descargar el archivo
     const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.sheet' });
     saveAs(blob, 'ReportesDashboard.xlsx');
   };
 
@@ -163,7 +227,6 @@ export default function Dashboard() {
         </div>
       </div>
       
-      {/* --- SECCIÓN RESTAURADA --- */}
       <div className="dashboard-board">
         <div className="dashboard-column red">
           <h2>En Dirección a la que pertenece</h2>
@@ -184,8 +247,6 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      {/* --- FIN DE LA SECCIÓN RESTAURADA --- */}
-      
     </div>
   );
 }
