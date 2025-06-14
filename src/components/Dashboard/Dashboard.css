@@ -4,6 +4,7 @@
   padding: 2rem;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
+
 .dashboard-header {
   display: flex;
   flex-direction: column;
@@ -18,51 +19,61 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 12px;
 }
+
 .header-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-}
-
-/* --- ESTILOS PARA LOS BOTONES DEL HEADER --- */
-.header-actions {
-  display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  flex-shrink: 0;
+}
+
 .action-button {
-  text-decoration: none;
+  background-color: #495057; /* Color base gris oscuro/neutro */
+  color: white;
   border: none;
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
   font-size: 1rem;
   font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
-  color: white;
-  display: inline-block;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem; /* Espacio entre icono y texto */
+  transition: all 0.2s ease-in-out;
 }
 
-.reports-button {
-  background-color: #5bc0de; /* Azul claro */
-}
-.reports-button:hover {
-  background-color: #31b0d5;
+.action-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
 
-.home-button {
-  background-color: #6c757d; /* Gris */
-}
-.home-button:hover {
-  background-color: #5a6268;
+.action-button svg {
+  fill: currentColor;
 }
 
+/* Colores específicos al pasar el mouse */
+.export-button:hover {
+  background-color: #1D6F42; /* Verde Excel */
+}
+.back-button:hover {
+  background-color: #5a6268; /* Gris un poco más claro */
+}
 
 .filter-controls {
   display: flex;
+  flex-wrap: wrap;
   gap: 1rem;
 }
+
 .filter-controls select {
   padding: 0.6rem;
   border: 1px solid #ccc;
@@ -70,21 +81,23 @@
   font-size: 1rem;
   background-color: white;
 }
+
 .dashboard-board {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
 }
+
 .dashboard-column {
   display: flex;
   flex-direction: column;
   border-radius: 12px;
-  background-color: rgba(244, 245, 247, 0.75);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 1rem;
 }
+
 .dashboard-column h2 {
   font-size: 1.2rem;
   padding: 0.8rem;
@@ -93,18 +106,22 @@
   color: white;
   text-align: center;
 }
+
 .dashboard-column.red {
   background-color: rgba(255, 235, 238, 0.7);
 }
 .dashboard-column.red h2 { background-color: #c62828; }
+
 .dashboard-column.amber {
   background-color: rgba(255, 248, 225, 0.7);
 }
 .dashboard-column.amber h2 { background-color: #ff8f00; }
+
 .dashboard-column.green {
   background-color: rgba(232, 245, 233, 0.7);
 }
 .dashboard-column.green h2 { background-color: #2e7d32; }
+
 .card-list {
   display: flex;
   flex-direction: column;
@@ -114,6 +131,7 @@
   min-height: 50vh;
   padding: 0.2rem;
 }
+
 .dashboard-card {
   background-color: rgba(255, 255, 255, 0.95);
   border-radius: 6px;
@@ -125,9 +143,11 @@
   color: inherit;
   border-left: 5px solid;
 }
+
 .dashboard-card:hover {
   box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
 }
+
 .dashboard-card h4 {
   margin: 0 0 0.5rem 0;
   font-size: 1rem;
@@ -155,11 +175,20 @@
 .dashboard-column.red .dashboard-card { border-left-color: #c62828; }
 .dashboard-column.amber .dashboard-card { border-left-color: #ff8f00; }
 .dashboard-column.green .dashboard-card { border-left-color: #2e7d32; }
+
+.loading-container {
+  text-align: center;
+  padding: 4rem;
+  font-size: 1.5rem;
+  color: #777;
+}
+
 @media (max-width: 1024px) {
   .dashboard-board {
     grid-template-columns: 1fr 1fr;
   }
 }
+
 @media (max-width: 768px) {
   .dashboard-board {
     grid-template-columns: 1fr;
@@ -168,8 +197,6 @@
     padding: 1rem;
   }
   .header-top {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+    justify-content: center;
   }
 }

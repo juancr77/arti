@@ -6,6 +6,19 @@ import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import './Dashboard.css';
 
+// --- Componentes de Iconos ---
+const ExcelIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+    <path d="M21.17 3.25Q21.5 3.25 21.76 3.5 22 3.75 22 4.08V19.92Q22 20.25 21.76 20.5 21.5 20.75 21.17 20.75H2.83Q2.5 20.75 2.24 20.5 2 20.25 2 19.92V4.08Q2 3.75 2.24 3.5 2.5 3.25 2.83 3.25H21.17M12.25 6.13H15.16L12.91 10.1L15.18 14.13H12.2L10.71 11.39L9.22 14.13H6.31L8.59 10.1L6.39 6.13H9.3L10.75 8.79Z" />
+  </svg>
+);
+
+const BackIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+    <path d="M20 11V13H8L13.5 18.5L12.08 19.92L4.16 12L12.08 4.08L13.5 5.5L8 11H20Z" />
+  </svg>
+);
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [allPeticiones, setAllPeticiones] = useState([]);
@@ -16,7 +29,6 @@ export default function Dashboard() {
   const [filtroDireccion, setFiltroDireccion] = useState('todas');
   const [direccionesOptions, setDireccionesOptions] = useState([]);
 
-  // La lógica de carga y filtrado no cambia
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -63,10 +75,8 @@ export default function Dashboard() {
       alert("No hay datos para exportar.");
       return;
     }
-
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Reportes");
-
     worksheet.columns = [
       { header: 'Nombre Completo', key: 'nombre', width: 30 },
       { header: 'Teléfono', key: 'telefono', width: 15 },
@@ -78,21 +88,12 @@ export default function Dashboard() {
       { header: 'Petición Completa', key: 'peticion', width: 60 },
       { header: 'Enlace a Imagen', key: 'imagen', width: 30 },
     ];
-
     const headerRow = worksheet.getRow(1);
     headerRow.eachCell((cell) => {
-      cell.fill = {
-        type: 'pattern',
-        pattern: 'solid',
-        fgColor: { argb: 'FF2E7D32' }
-      };
-      cell.font = {
-        color: { argb: 'FFFFFFFF' },
-        bold: true
-      };
+      cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E7D32' } };
+      cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
       cell.alignment = { vertical: 'middle', horizontal: 'center' };
     });
-
     const formattedData = dataToExport.map(reporte => ({
       nombre: `${reporte.nombres} ${reporte.apellidoPaterno} ${reporte.apellidoMaterno}`,
       telefono: reporte.telefono,
@@ -105,26 +106,16 @@ export default function Dashboard() {
       imagen: reporte.ineURL ? { text: 'Ver Imagen', hyperlink: reporte.ineURL } : 'No adjunta'
     }));
     worksheet.addRows(formattedData);
-
-    // --- SECCIÓN DE COLORES MODIFICADA ---
     worksheet.eachRow({ includeEmpty: false }, function (row, rowNumber) {
       if (rowNumber > 1) {
         const statusCell = row.getCell('estatus');
-        let fillColor = 'FFFFFFFF'; // Blanco por defecto
-        
-        // Usamos colores más intensos pero aún adecuados para fondo
-        if (statusCell.value === 'pendiente') fillColor = 'FFFFCDD2';  // Rojo más intenso
-        if (statusCell.value === 'en proceso') fillColor = 'FFFFECB3'; // Ámbar más intenso
-        if (statusCell.value === 'resuelta') fillColor = 'FFC8E6C9';   // Verde más intenso
-        
-        statusCell.fill = {
-          type: 'pattern',
-          pattern: 'solid',
-          fgColor: { argb: fillColor }
-        };
+        let fillColor = 'FFFFFFFF';
+        if (statusCell.value === 'pendiente') fillColor = 'FFFFCDD2';
+        if (statusCell.value === 'en proceso') fillColor = 'FFFFECB3';
+        if (statusCell.value === 'resuelta') fillColor = 'FFC8E6C9';
+        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: fillColor } };
       }
     });
-
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     saveAs(blob, 'ReportesDashboard.xlsx');
@@ -152,10 +143,12 @@ export default function Dashboard() {
           <h1>Dashboard de Seguimiento</h1>
           <div className="header-actions">
             <button onClick={handleExportToExcel} className="action-button export-button">
+              <ExcelIcon />
               Bajar Excel
             </button>
-            <button onClick={() => navigate(-1)} className="back-button">
-              ← Volver
+            <button onClick={() => navigate(-1)} className="action-button back-button">
+              <BackIcon />
+              Volver
             </button>
           </div>
         </div>
@@ -169,6 +162,8 @@ export default function Dashboard() {
             </select>
         </div>
       </div>
+      
+      {/* --- SECCIÓN RESTAURADA --- */}
       <div className="dashboard-board">
         <div className="dashboard-column red">
           <h2>En Dirección a la que pertenece</h2>
@@ -189,6 +184,8 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      {/* --- FIN DE LA SECCIÓN RESTAURADA --- */}
+      
     </div>
   );
 }
