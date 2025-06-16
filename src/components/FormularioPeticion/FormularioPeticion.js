@@ -303,7 +303,7 @@ export default function FormularioPeticion() {
             <label htmlFor="origenReporte">Origen del Reporte/Petición</label>
             <select id="origenReporte" name="origenReporte" value={formData.origenReporte} onChange={handleChange} className="form-select">
               <option value="">-- ¿Por que medio Reporto? --</option>
-              {['Red Social', 'WhatsApp', 'Recomendación', 'Otro'].map(origen => <option key={origen} value={origen}>{origen}</option>)}
+              {['Redes Sociales', 'WhatsApp', 'Atención en oficina', 'Otro'].map(origen => <option key={origen} value={origen}>{origen}</option>)}
             </select>
           </div>
           
