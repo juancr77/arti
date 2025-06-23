@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { db, storage } from '../../services/firebase';
 import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import './FormularioPeticion.css'; 
+import './FormularioPeticion.css'; // Importamos el CSS
 
 // --- Icono de Spinner (SVG simple) ---
 const SpinnerIcon = () => (
@@ -26,14 +26,18 @@ export default function FormularioPeticion() {
     return `${yyyy}-${mm}-${dd}`;
   };
   
-  // --- ESTADO DEL FORMULARIO ---
+  // --- ESTADO DEL FORMULARIO ACTUALIZADO ---
   const [formData, setFormData] = useState({
     nombres: '',
     apellidoPaterno: '',
     apellidoMaterno: '',
     telefono: '',
     localidad: '',
-    direccion: '',
+    direccion: '', 
+    colonia: '',
+    calle: '',
+    entreCalle1: '',
+    entreCalle2: '',
     estructura: 'no',
     origenReporte: '',
     peticion: '',
@@ -45,21 +49,17 @@ export default function FormularioPeticion() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   
-  // Estados para la búsqueda de localidades
   const [localidadesOptions, setLocalidadesOptions] = useState([]);
   const [localidadSearchTerm, setLocalidadSearchTerm] = useState("");
   const [isLocalidadListOpen, setIsLocalidadListOpen] = useState(false);
   const localidadDropdownRef = useRef(null);
 
-  // Estados para la búsqueda de direcciones
   const [direccionesOptions, setDireccionesOptions] = useState([]);
   const [direccionSearchTerm, setDireccionSearchTerm] = useState("");
   const [isDireccionListOpen, setIsDireccionListOpen] = useState(false);
   const direccionDropdownRef = useRef(null);
 
-
-  // --- EFECTOS ---
-  // Cargar localidades al inicio
+  // --- EFECTOS (sin cambios) ---
   useEffect(() => {
     const fetchLocalidades = async () => {
       try {
@@ -75,7 +75,6 @@ export default function FormularioPeticion() {
     fetchLocalidades();
   }, []); 
 
-  // Cargar direcciones al inicio
   useEffect(() => {
     const fetchDirecciones = async () => {
       try {
@@ -91,7 +90,6 @@ export default function FormularioPeticion() {
     fetchDirecciones();
   }, []);
 
-  // Cerrar el dropdown de localidad si se hace clic fuera de él
   useEffect(() => {
     function handleClickOutside(event) {
       if (localidadDropdownRef.current && !localidadDropdownRef.current.contains(event.target)) {
@@ -104,7 +102,6 @@ export default function FormularioPeticion() {
     };
   }, [localidadDropdownRef]);
 
-  // Cerrar el dropdown de dirección si se hace clic fuera de él
   useEffect(() => {
     function handleClickOutside(event) {
       if (direccionDropdownRef.current && !direccionDropdownRef.current.contains(event.target)) {
@@ -117,8 +114,7 @@ export default function FormularioPeticion() {
     };
   }, [direccionDropdownRef]);
 
-
-  // --- MANEJADORES DE EVENTOS ---
+  // --- MANEJADORES DE EVENTOS (sin cambios) ---
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({ ...prevData, [name]: value }));
@@ -162,19 +158,10 @@ export default function FormularioPeticion() {
       const direccionFinal = formData.direccion.trim();
       
       const peticionParaGuardar = {
-        nombres: formData.nombres,
-        apellidoPaterno: formData.apellidoPaterno,
-        apellidoMaterno: formData.apellidoMaterno,
-        telefono: formData.telefono,
-        localidad: localidadFinal,
-        direccion: direccionFinal,
-        estructura: formData.estructura,
-        origenReporte: formData.origenReporte,
-        peticion: formData.peticion,
-        hora: formData.hora,
+        ...formData,
         ineURL: ineURL,
-        fecha: new Date(`${formData.fechaReporte}T${formData.hora || '00:00:00'}`),
         fechaCreacion: serverTimestamp(),
+        fecha: new Date(`${formData.fechaReporte}T${formData.hora || '00:00:00'}`),
         estatus: 'pendiente', 
       };
       
@@ -192,6 +179,7 @@ export default function FormularioPeticion() {
         nombres: '', apellidoPaterno: '', apellidoMaterno: '', telefono: '',
         localidad: '', direccion: '', estructura: 'no', origenReporte: '', peticion: '',
         hora: '', fechaReporte: getTodayDateString(),
+        colonia: '', calle: '', entreCalle1: '', entreCalle2: ''
       });
       setIneFile(null); setIneFileName('');
       if (document.getElementById('ineFile')) document.getElementById('ineFile').value = null;
@@ -236,11 +224,10 @@ export default function FormularioPeticion() {
             </div>
 
             <div className="form-column">
-               <div className="form-group">
+              <div className="form-group">
                 <label htmlFor="fechaReporte">Fecha del Reporte*</label>
                 <input type="date" id="fechaReporte" name="fechaReporte" value={formData.fechaReporte} onChange={handleChange} required className="form-input" />
               </div>
-
               <div className="form-group searchable-dropdown" ref={direccionDropdownRef}>
                 <label>Dirección a la que Pertenece*</label>
                 <button type="button" className={`dropdown-toggle ${!formData.direccion ? 'placeholder' : ''}`} onClick={() => setIsDireccionListOpen(!isDireccionListOpen)}>
@@ -250,21 +237,12 @@ export default function FormularioPeticion() {
                   <div className="suggestions-list">
                     <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir dirección..." value={direccionSearchTerm} onChange={(e) => setDireccionSearchTerm(e.target.value)} autoFocus />
                     <div className="suggestion-items-container">
-                      {filteredDirecciones.map(dir => (
-                        <div key={dir} className="suggestion-item" onClick={() => handleDireccionSelect(dir)}>
-                          {dir}
-                        </div>
-                      ))}
-                      {filteredDirecciones.length === 0 && direccionSearchTerm && (
-                        <div className="suggestion-item add-new" onClick={() => handleDireccionSelect(direccionSearchTerm)}>
-                          Añadir nueva: "{direccionSearchTerm}"
-                        </div>
-                      )}
+                      {filteredDirecciones.map(dir => ( <div key={dir} className="suggestion-item" onClick={() => handleDireccionSelect(dir)}>{dir}</div> ))}
+                      {filteredDirecciones.length === 0 && direccionSearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleDireccionSelect(direccionSearchTerm)}>Añadir nueva: "{direccionSearchTerm}"</div> )}
                     </div>
                   </div>
                 )}
               </div>
-              
               <div className="form-group searchable-dropdown" ref={localidadDropdownRef}>
                 <label>Localidad*</label>
                 <button type="button" className={`dropdown-toggle ${!formData.localidad ? 'placeholder' : ''}`} onClick={() => setIsLocalidadListOpen(!isLocalidadListOpen)}>
@@ -274,21 +252,39 @@ export default function FormularioPeticion() {
                   <div className="suggestions-list">
                     <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir localidad..." value={localidadSearchTerm} onChange={(e) => setLocalidadSearchTerm(e.target.value)} autoFocus />
                     <div className="suggestion-items-container">
-                      {filteredLocalidades.map(loc => (
-                        <div key={loc} className="suggestion-item" onClick={() => handleLocalidadSelect(loc)}>
-                          {loc}
-                        </div>
-                      ))}
-                      {filteredLocalidades.length === 0 && localidadSearchTerm && (
-                         <div className="suggestion-item add-new" onClick={() => handleLocalidadSelect(localidadSearchTerm)}>
-                            Añadir nueva: "{localidadSearchTerm}"
-                          </div>
-                      )}
+                      {filteredLocalidades.map(loc => ( <div key={loc} className="suggestion-item" onClick={() => handleLocalidadSelect(loc)}>{loc}</div> ))}
+                      {filteredLocalidades.length === 0 && localidadSearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleLocalidadSelect(localidadSearchTerm)}>Añadir nueva: "{localidadSearchTerm}"</div> )}
                     </div>
                   </div>
                 )}
               </div>
             </div>
+          </div>
+          
+          {/* --- ESTRUCTURA MODIFICADA: Colonia y Calle en dos columnas --- */}
+          <div className="form-grid full-width-group">
+            <div className="form-group">
+              <label htmlFor="colonia">Colonia o Fraccionamiento</label>
+              <input type="text" id="colonia" name="colonia" value={formData.colonia} onChange={handleChange} className="form-input" />
+            </div>
+            <div className="form-group">
+                <label htmlFor="calle">Calle</label>
+                <input type="text" id="calle" name="calle" value={formData.calle} onChange={handleChange} className="form-input" />
+            </div>
+          </div>
+          
+          <div className="full-width-group">
+              <label className="group-label">Ubicación (entre qué calles)</label>
+              <div className="form-grid">
+                <div className="form-group">
+                    <label htmlFor="entreCalle1">Calle 1</label>
+                    <input type="text" id="entreCalle1" name="entreCalle1" value={formData.entreCalle1} onChange={handleChange} className="form-input" />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="entreCalle2">Calle 2</label>
+                    <input type="text" id="entreCalle2" name="entreCalle2" value={formData.entreCalle2} onChange={handleChange} className="form-input" />
+                </div>
+              </div>
           </div>
           
           <div className="form-group full-width-group">
@@ -303,7 +299,7 @@ export default function FormularioPeticion() {
             <label htmlFor="origenReporte">Origen del Reporte/Petición</label>
             <select id="origenReporte" name="origenReporte" value={formData.origenReporte} onChange={handleChange} className="form-select">
               <option value="">-- ¿Por que medio Reporto? --</option>
-              {['Redes Sociales', 'WhatsApp', 'Atención en oficina', 'Otro'].map(origen => <option key={origen} value={origen}>{origen}</option>)}
+              {['Red Social', 'WhatsApp', 'Recomendación', 'Otro'].map(origen => <option key={origen} value={origen}>{origen}</option>)}
             </select>
           </div>
           
