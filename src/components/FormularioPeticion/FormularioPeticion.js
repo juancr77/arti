@@ -59,6 +59,11 @@ export default function FormularioPeticion() {
   const [isDireccionListOpen, setIsDireccionListOpen] = useState(false);
   const direccionDropdownRef = useRef(null);
 
+  const [coloniasOptions, setColoniasOptions] = useState([]);
+  const [coloniaSearchTerm, setColoniaSearchTerm] = useState("");
+  const [isColoniaListOpen, setIsColoniaListOpen] = useState(false);
+  const coloniaDropdownRef = useRef(null);
+
   const [callesOptions, setCallesOptions] = useState([]);
   
   const [calleSearchTerm, setCalleSearchTerm] = useState("");
@@ -72,7 +77,7 @@ export default function FormularioPeticion() {
   const [entreCalle2SearchTerm, setEntreCalle2SearchTerm] = useState("");
   const [isEntreCalle2ListOpen, setIsEntreCalle2ListOpen] = useState(false);
   const entreCalle2DropdownRef = useRef(null);
-
+  
   // --- EFECTOS ---
   useEffect(() => {
     const fetchCollectionData = async (collectionName, setData) => {
@@ -88,7 +93,23 @@ export default function FormularioPeticion() {
     fetchCollectionData("localidades", setLocalidadesOptions);
     fetchCollectionData("direcciones", setDireccionesOptions);
     fetchCollectionData("calles", setCallesOptions);
+    fetchCollectionData("colonias", setColoniasOptions);
   }, []); 
+
+  useEffect(() => {
+      function handleClickOutside(event) {
+          if (localidadDropdownRef.current && !localidadDropdownRef.current.contains(event.target)) setIsLocalidadListOpen(false);
+          if (direccionDropdownRef.current && !direccionDropdownRef.current.contains(event.target)) setIsDireccionListOpen(false);
+          if (coloniaDropdownRef.current && !coloniaDropdownRef.current.contains(event.target)) setIsColoniaListOpen(false);
+          if (calleDropdownRef.current && !calleDropdownRef.current.contains(event.target)) setIsCalleListOpen(false);
+          if (entreCalle1DropdownRef.current && !entreCalle1DropdownRef.current.contains(event.target)) setIsEntreCalle1ListOpen(false);
+          if (entreCalle2DropdownRef.current && !entreCalle2DropdownRef.current.contains(event.target)) setIsEntreCalle2ListOpen(false);
+      }
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+          document.removeEventListener("mousedown", handleClickOutside);
+      };
+  }, []);
 
   // --- MANEJADORES DE EVENTOS ---
   const handleChange = (e) => {
@@ -112,6 +133,12 @@ export default function FormularioPeticion() {
     setFormData(prevData => ({ ...prevData, direccion: selected }));
     setIsDireccionListOpen(false);
     setDireccionSearchTerm("");
+  };
+
+  const handleColoniaSelect = (selected) => {
+    setFormData(prevData => ({ ...prevData, colonia: selected }));
+    setIsColoniaListOpen(false);
+    setColoniaSearchTerm("");
   };
 
   const handleCalleSelect = (selected) => {
@@ -165,6 +192,7 @@ export default function FormularioPeticion() {
 
       await addNewValueToCollection('localidades', localidadesOptions, formData.localidad);
       await addNewValueToCollection('direcciones', direccionesOptions, formData.direccion);
+      await addNewValueToCollection('colonias', coloniasOptions, formData.colonia);
       await addNewValueToCollection('calles', callesOptions, formData.calle);
       await addNewValueToCollection('calles', callesOptions, formData.entreCalle1);
       await addNewValueToCollection('calles', callesOptions, formData.entreCalle2);
@@ -188,6 +216,7 @@ export default function FormularioPeticion() {
 
   const filteredLocalidades = localidadesOptions.filter(loc => loc.toLowerCase().includes(localidadSearchTerm.toLowerCase()));
   const filteredDirecciones = direccionesOptions.filter(dir => dir.toLowerCase().includes(direccionSearchTerm.toLowerCase()));
+  const filteredColonias = coloniasOptions.filter(col => col.toLowerCase().includes(coloniaSearchTerm.toLowerCase()));
   const filteredCalles = callesOptions.filter(c => c.toLowerCase().includes(calleSearchTerm.toLowerCase()));
   const filteredEntreCalles1 = callesOptions.filter(c => c.toLowerCase().includes(entreCalle1SearchTerm.toLowerCase()));
   const filteredEntreCalles2 = callesOptions.filter(c => c.toLowerCase().includes(entreCalle2SearchTerm.toLowerCase()));
@@ -260,9 +289,20 @@ export default function FormularioPeticion() {
           </div>
           
           <div className="form-grid full-width-group">
-            <div className="form-group">
-              <label htmlFor="colonia">Colonia o Fraccionamiento</label>
-              <input type="text" id="colonia" name="colonia" value={formData.colonia} onChange={handleChange} className="form-input" />
+            <div className="form-group searchable-dropdown" ref={coloniaDropdownRef}>
+              <label>Colonia o Fraccionamiento</label>
+              <button type="button" className={`dropdown-toggle ${!formData.colonia ? 'placeholder' : ''}`} onClick={() => setIsColoniaListOpen(!isColoniaListOpen)}>
+                {formData.colonia || "Selecciona una colonia"}
+              </button>
+              {isColoniaListOpen && (
+                <div className="suggestions-list">
+                  <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir..." value={coloniaSearchTerm} onChange={(e) => setColoniaSearchTerm(e.target.value)} autoFocus />
+                  <div className="suggestion-items-container">
+                    {filteredColonias.map(c => ( <div key={c} className="suggestion-item" onClick={() => handleColoniaSelect(c)}>{c}</div> ))}
+                    {filteredColonias.length === 0 && coloniaSearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleColoniaSelect(coloniaSearchTerm)}>Añadir nueva: "{coloniaSearchTerm}"</div> )}
+                  </div>
+                </div>
+              )}
             </div>
             <div className="form-group searchable-dropdown" ref={calleDropdownRef}>
               <label>Calle</label>
