@@ -17,16 +17,15 @@ const SpinnerIcon = () => (
 // --- Componente con el nombre correcto ---
 export default function FormularioPeticion() {
 
-  // Función para obtener la fecha de hoy en formato yyyy-MM-dd
   const getTodayDateString = () => {
     const today = new Date();
     const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0'); // Enero es 0
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
     const dd = String(today.getDate()).padStart(2, '0');
     return `${yyyy}-${mm}-${dd}`;
   };
   
-  // --- ESTADO DEL FORMULARIO ACTUALIZADO ---
+  // --- ESTADO DEL FORMULARIO ---
   const [formData, setFormData] = useState({
     nombres: '',
     apellidoPaterno: '',
@@ -49,6 +48,7 @@ export default function FormularioPeticion() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   
+  // --- Estados y Refs para los Dropdowns ---
   const [localidadesOptions, setLocalidadesOptions] = useState([]);
   const [localidadSearchTerm, setLocalidadSearchTerm] = useState("");
   const [isLocalidadListOpen, setIsLocalidadListOpen] = useState(false);
@@ -59,62 +59,38 @@ export default function FormularioPeticion() {
   const [isDireccionListOpen, setIsDireccionListOpen] = useState(false);
   const direccionDropdownRef = useRef(null);
 
-  // --- EFECTOS (sin cambios) ---
+  const [callesOptions, setCallesOptions] = useState([]);
+  
+  const [calleSearchTerm, setCalleSearchTerm] = useState("");
+  const [isCalleListOpen, setIsCalleListOpen] = useState(false);
+  const calleDropdownRef = useRef(null);
+
+  const [entreCalle1SearchTerm, setEntreCalle1SearchTerm] = useState("");
+  const [isEntreCalle1ListOpen, setIsEntreCalle1ListOpen] = useState(false);
+  const entreCalle1DropdownRef = useRef(null);
+
+  const [entreCalle2SearchTerm, setEntreCalle2SearchTerm] = useState("");
+  const [isEntreCalle2ListOpen, setIsEntreCalle2ListOpen] = useState(false);
+  const entreCalle2DropdownRef = useRef(null);
+
+  // --- EFECTOS ---
   useEffect(() => {
-    const fetchLocalidades = async () => {
-      try {
-        const localidadesCollection = collection(db, "localidades");
-        const querySnapshot = await getDocs(localidadesCollection);
-        const localidadesData = querySnapshot.docs.map(doc => doc.data().nombre);
-        localidadesData.sort((a, b) => a.localeCompare(b));
-        setLocalidadesOptions(localidadesData);
-      } catch (error) {
-        console.error("Error cargando localidades: ", error);
-      }
+    const fetchCollectionData = async (collectionName, setData) => {
+        try {
+            const querySnapshot = await getDocs(collection(db, collectionName));
+            const data = querySnapshot.docs.map(doc => doc.data().nombre).sort((a, b) => a.localeCompare(b));
+            setData(data);
+        } catch (error) {
+            console.error(`Error cargando ${collectionName}: `, error);
+        }
     };
-    fetchLocalidades();
+
+    fetchCollectionData("localidades", setLocalidadesOptions);
+    fetchCollectionData("direcciones", setDireccionesOptions);
+    fetchCollectionData("calles", setCallesOptions);
   }, []); 
 
-  useEffect(() => {
-    const fetchDirecciones = async () => {
-      try {
-        const direccionesCollection = collection(db, "direcciones");
-        const querySnapshot = await getDocs(direccionesCollection);
-        const direccionesData = querySnapshot.docs.map(doc => doc.data().nombre);
-        direccionesData.sort((a, b) => a.localeCompare(b));
-        setDireccionesOptions(direccionesData);
-      } catch (error) {
-        console.error("Error cargando direcciones: ", error);
-      }
-    };
-    fetchDirecciones();
-  }, []);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (localidadDropdownRef.current && !localidadDropdownRef.current.contains(event.target)) {
-        setIsLocalidadListOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [localidadDropdownRef]);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (direccionDropdownRef.current && !direccionDropdownRef.current.contains(event.target)) {
-        setIsDireccionListOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [direccionDropdownRef]);
-
-  // --- MANEJADORES DE EVENTOS (sin cambios) ---
+  // --- MANEJADORES DE EVENTOS ---
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({ ...prevData, [name]: value }));
@@ -126,16 +102,34 @@ export default function FormularioPeticion() {
     else { setIneFile(null); setIneFileName(''); }
   };
   
-  const handleLocalidadSelect = (selectedLocalidad) => {
-    setFormData(prevData => ({ ...prevData, localidad: selectedLocalidad }));
+  const handleLocalidadSelect = (selected) => {
+    setFormData(prevData => ({ ...prevData, localidad: selected }));
     setIsLocalidadListOpen(false);
     setLocalidadSearchTerm("");
   };
 
-  const handleDireccionSelect = (selectedDireccion) => {
-    setFormData(prevData => ({ ...prevData, direccion: selectedDireccion }));
+  const handleDireccionSelect = (selected) => {
+    setFormData(prevData => ({ ...prevData, direccion: selected }));
     setIsDireccionListOpen(false);
     setDireccionSearchTerm("");
+  };
+
+  const handleCalleSelect = (selected) => {
+    setFormData(prevData => ({ ...prevData, calle: selected }));
+    setIsCalleListOpen(false);
+    setCalleSearchTerm("");
+  };
+
+  const handleEntreCalle1Select = (selected) => {
+    setFormData(prevData => ({ ...prevData, entreCalle1: selected }));
+    setIsEntreCalle1ListOpen(false);
+    setEntreCalle1SearchTerm("");
+  };
+  
+  const handleEntreCalle2Select = (selected) => {
+    setFormData(prevData => ({ ...prevData, entreCalle2: selected }));
+    setIsEntreCalle2ListOpen(false);
+    setEntreCalle2SearchTerm("");
   };
 
   const handleSubmit = async (e) => {
@@ -154,9 +148,6 @@ export default function FormularioPeticion() {
         ineURL = await getDownloadURL(ineStorageRef);
       }
       
-      const localidadFinal = formData.localidad.trim();
-      const direccionFinal = formData.direccion.trim();
-      
       const peticionParaGuardar = {
         ...formData,
         ineURL: ineURL,
@@ -165,13 +156,18 @@ export default function FormularioPeticion() {
         estatus: 'pendiente', 
       };
       
-      if (localidadFinal && !localidadesOptions.some(loc => loc.toLowerCase() === localidadFinal.toLowerCase())) {
-        await addDoc(collection(db, 'localidades'), { nombre: localidadFinal });
-      }
+      const addNewValueToCollection = async (collectionName, options, value) => {
+          const trimmedValue = value.trim();
+          if (trimmedValue && !options.some(opt => opt.toLowerCase() === trimmedValue.toLowerCase())) {
+              await addDoc(collection(db, collectionName), { nombre: trimmedValue });
+          }
+      };
 
-      if (direccionFinal && !direccionesOptions.some(dir => dir.toLowerCase() === direccionFinal.toLowerCase())) {
-        await addDoc(collection(db, 'direcciones'), { nombre: direccionFinal });
-      }
+      await addNewValueToCollection('localidades', localidadesOptions, formData.localidad);
+      await addNewValueToCollection('direcciones', direccionesOptions, formData.direccion);
+      await addNewValueToCollection('calles', callesOptions, formData.calle);
+      await addNewValueToCollection('calles', callesOptions, formData.entreCalle1);
+      await addNewValueToCollection('calles', callesOptions, formData.entreCalle2);
 
       await addDoc(collection(db, 'peticiones'), peticionParaGuardar);
       setMessage({ type: 'success', text: '¡Listo! el reporte se ha registrado exitosamente.' });
@@ -182,7 +178,6 @@ export default function FormularioPeticion() {
         colonia: '', calle: '', entreCalle1: '', entreCalle2: ''
       });
       setIneFile(null); setIneFileName('');
-      if (document.getElementById('ineFile')) document.getElementById('ineFile').value = null;
     } catch (error) {
       console.error("Error al registrar el Reporte: ", error);
       setMessage({ type: 'error', text: 'Ocurrió un error al registrar el reporte.' });
@@ -193,6 +188,9 @@ export default function FormularioPeticion() {
 
   const filteredLocalidades = localidadesOptions.filter(loc => loc.toLowerCase().includes(localidadSearchTerm.toLowerCase()));
   const filteredDirecciones = direccionesOptions.filter(dir => dir.toLowerCase().includes(direccionSearchTerm.toLowerCase()));
+  const filteredCalles = callesOptions.filter(c => c.toLowerCase().includes(calleSearchTerm.toLowerCase()));
+  const filteredEntreCalles1 = callesOptions.filter(c => c.toLowerCase().includes(entreCalle1SearchTerm.toLowerCase()));
+  const filteredEntreCalles2 = callesOptions.filter(c => c.toLowerCase().includes(entreCalle2SearchTerm.toLowerCase()));
 
   return (
     <>
@@ -261,28 +259,60 @@ export default function FormularioPeticion() {
             </div>
           </div>
           
-          {/* --- ESTRUCTURA MODIFICADA: Colonia y Calle en dos columnas --- */}
           <div className="form-grid full-width-group">
             <div className="form-group">
               <label htmlFor="colonia">Colonia o Fraccionamiento</label>
               <input type="text" id="colonia" name="colonia" value={formData.colonia} onChange={handleChange} className="form-input" />
             </div>
-            <div className="form-group">
-                <label htmlFor="calle">Calle</label>
-                <input type="text" id="calle" name="calle" value={formData.calle} onChange={handleChange} className="form-input" />
+            <div className="form-group searchable-dropdown" ref={calleDropdownRef}>
+              <label>Calle</label>
+              <button type="button" className={`dropdown-toggle ${!formData.calle ? 'placeholder' : ''}`} onClick={() => setIsCalleListOpen(!isCalleListOpen)}>
+                {formData.calle || "Selecciona una calle"}
+              </button>
+              {isCalleListOpen && (
+                <div className="suggestions-list">
+                  <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir..." value={calleSearchTerm} onChange={(e) => setCalleSearchTerm(e.target.value)} autoFocus />
+                  <div className="suggestion-items-container">
+                    {filteredCalles.map(c => ( <div key={c} className="suggestion-item" onClick={() => handleCalleSelect(c)}>{c}</div> ))}
+                    {filteredCalles.length === 0 && calleSearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleCalleSelect(calleSearchTerm)}>Añadir nueva: "{calleSearchTerm}"</div> )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
           
           <div className="full-width-group">
               <label className="group-label">Ubicación (entre qué calles)</label>
               <div className="form-grid">
-                <div className="form-group">
+                <div className="form-group searchable-dropdown" ref={entreCalle1DropdownRef}>
                     <label htmlFor="entreCalle1">Calle 1</label>
-                    <input type="text" id="entreCalle1" name="entreCalle1" value={formData.entreCalle1} onChange={handleChange} className="form-input" />
+                    <button type="button" className={`dropdown-toggle ${!formData.entreCalle1 ? 'placeholder' : ''}`} onClick={() => setIsEntreCalle1ListOpen(!isEntreCalle1ListOpen)}>
+                      {formData.entreCalle1 || "Selecciona una calle"}
+                    </button>
+                    {isEntreCalle1ListOpen && (
+                      <div className="suggestions-list">
+                        <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir..." value={entreCalle1SearchTerm} onChange={(e) => setEntreCalle1SearchTerm(e.target.value)} autoFocus />
+                        <div className="suggestion-items-container">
+                          {filteredEntreCalles1.map(c => ( <div key={c} className="suggestion-item" onClick={() => handleEntreCalle1Select(c)}>{c}</div> ))}
+                          {filteredEntreCalles1.length === 0 && entreCalle1SearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleEntreCalle1Select(entreCalle1SearchTerm)}>Añadir nueva: "{entreCalle1SearchTerm}"</div> )}
+                        </div>
+                      </div>
+                    )}
                 </div>
-                <div className="form-group">
+                <div className="form-group searchable-dropdown" ref={entreCalle2DropdownRef}>
                     <label htmlFor="entreCalle2">Calle 2</label>
-                    <input type="text" id="entreCalle2" name="entreCalle2" value={formData.entreCalle2} onChange={handleChange} className="form-input" />
+                    <button type="button" className={`dropdown-toggle ${!formData.entreCalle2 ? 'placeholder' : ''}`} onClick={() => setIsEntreCalle2ListOpen(!isEntreCalle2ListOpen)}>
+                      {formData.entreCalle2 || "Selecciona una calle"}
+                    </button>
+                    {isEntreCalle2ListOpen && (
+                      <div className="suggestions-list">
+                        <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir..." value={entreCalle2SearchTerm} onChange={(e) => setEntreCalle2SearchTerm(e.target.value)} autoFocus />
+                        <div className="suggestion-items-container">
+                          {filteredEntreCalles2.map(c => ( <div key={c} className="suggestion-item" onClick={() => handleEntreCalle2Select(c)}>{c}</div> ))}
+                          {filteredEntreCalles2.length === 0 && entreCalle2SearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleEntreCalle2Select(entreCalle2SearchTerm)}>Añadir nueva: "{entreCalle2SearchTerm}"</div> )}
+                        </div>
+                      </div>
+                    )}
                 </div>
               </div>
           </div>
