@@ -159,25 +159,13 @@ export default function FormularioPeticion() {
           }
       };
       
-      const addNewCalleNumero = async (calle, numero) => {
-        const trimmedCalle = calle.trim();
-        const trimmedNumero = numero.trim();
-        if (!trimmedCalle || !trimmedNumero) return;
-
-        const q = query(collection(db, "calleNumero"), where("calle", "==", trimmedCalle), where("numero", "==", trimmedNumero));
-        const querySnapshot = await getDocs(q);
-        if(querySnapshot.empty) {
-            await addDoc(collection(db, "calleNumero"), { calle: trimmedCalle, numero: trimmedNumero });
-        }
-      };
-      
       await addNewValueToCollection('localidades', formData.localidad);
       await addNewValueToCollection('direcciones', formData.direccion);
       await addNewValueToCollection('colonias', formData.colonia);
       await addNewValueToCollection('calles', formData.calle);
       await addNewValueToCollection('calles', formData.entreCalle1);
       await addNewValueToCollection('calles', formData.entreCalle2);
-      await addNewCalleNumero(formData.calle, formData.numeroExterior);
+      await addNewValueToCollection('numExt', formData.numeroExterior); // Guardar el número exterior
 
       await addDoc(collection(db, 'peticiones'), peticionParaGuardar);
       setMessage({ type: 'success', text: '¡Listo! el reporte se ha registrado exitosamente.' });
