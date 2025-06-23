@@ -1,20 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
-// Importaciones de Firebase desde tu archivo centralizado
+// Importamos más funciones de Firestore
 import { db, storage } from '../../services/firebase';
-import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import './FormularioPeticion.css'; // Importamos el CSS
+import './FormularioPeticion.css';
 
-// --- Icono de Spinner (SVG simple) ---
 const SpinnerIcon = () => (
   <svg className="spinner-icon" viewBox="0 0 50 50">
     <circle className="path" cx="25" cy="25" r="20" fill="none" strokeWidth="5"></circle>
   </svg>
 );
 
-// --- Componente con el nombre correcto ---
 export default function FormularioPeticion() {
 
   const getTodayDateString = () => {
@@ -25,7 +23,6 @@ export default function FormularioPeticion() {
     return `${yyyy}-${mm}-${dd}`;
   };
   
-  // --- ESTADO DEL FORMULARIO ---
   const [formData, setFormData] = useState({
     nombres: '',
     apellidoPaterno: '',
@@ -35,6 +32,7 @@ export default function FormularioPeticion() {
     direccion: '', 
     colonia: '',
     calle: '',
+    numeroExterior: '',
     entreCalle1: '',
     entreCalle2: '',
     estructura: 'no',
@@ -48,7 +46,6 @@ export default function FormularioPeticion() {
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
   
-  // --- Estados y Refs para los Dropdowns ---
   const [localidadesOptions, setLocalidadesOptions] = useState([]);
   const [localidadSearchTerm, setLocalidadSearchTerm] = useState("");
   const [isLocalidadListOpen, setIsLocalidadListOpen] = useState(false);
@@ -78,7 +75,6 @@ export default function FormularioPeticion() {
   const [isEntreCalle2ListOpen, setIsEntreCalle2ListOpen] = useState(false);
   const entreCalle2DropdownRef = useRef(null);
   
-  // --- EFECTOS ---
   useEffect(() => {
     const fetchCollectionData = async (collectionName, setData) => {
         try {
@@ -111,7 +107,6 @@ export default function FormularioPeticion() {
       };
   }, []);
 
-  // --- MANEJADORES DE EVENTOS ---
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({ ...prevData, [name]: value }));
@@ -123,41 +118,12 @@ export default function FormularioPeticion() {
     else { setIneFile(null); setIneFileName(''); }
   };
   
-  const handleLocalidadSelect = (selected) => {
-    setFormData(prevData => ({ ...prevData, localidad: selected }));
-    setIsLocalidadListOpen(false);
-    setLocalidadSearchTerm("");
-  };
-
-  const handleDireccionSelect = (selected) => {
-    setFormData(prevData => ({ ...prevData, direccion: selected }));
-    setIsDireccionListOpen(false);
-    setDireccionSearchTerm("");
-  };
-
-  const handleColoniaSelect = (selected) => {
-    setFormData(prevData => ({ ...prevData, colonia: selected }));
-    setIsColoniaListOpen(false);
-    setColoniaSearchTerm("");
-  };
-
-  const handleCalleSelect = (selected) => {
-    setFormData(prevData => ({ ...prevData, calle: selected }));
-    setIsCalleListOpen(false);
-    setCalleSearchTerm("");
-  };
-
-  const handleEntreCalle1Select = (selected) => {
-    setFormData(prevData => ({ ...prevData, entreCalle1: selected }));
-    setIsEntreCalle1ListOpen(false);
-    setEntreCalle1SearchTerm("");
-  };
-  
-  const handleEntreCalle2Select = (selected) => {
-    setFormData(prevData => ({ ...prevData, entreCalle2: selected }));
-    setIsEntreCalle2ListOpen(false);
-    setEntreCalle2SearchTerm("");
-  };
+  const handleLocalidadSelect = (selected) => { setFormData(prevData => ({ ...prevData, localidad: selected })); setIsLocalidadListOpen(false); setLocalidadSearchTerm(""); };
+  const handleDireccionSelect = (selected) => { setFormData(prevData => ({ ...prevData, direccion: selected })); setIsDireccionListOpen(false); setDireccionSearchTerm(""); };
+  const handleColoniaSelect = (selected) => { setFormData(prevData => ({ ...prevData, colonia: selected })); setIsColoniaListOpen(false); setColoniaSearchTerm(""); };
+  const handleCalleSelect = (selected) => { setFormData(prevData => ({ ...prevData, calle: selected })); setIsCalleListOpen(false); setCalleSearchTerm(""); };
+  const handleEntreCalle1Select = (selected) => { setFormData(prevData => ({ ...prevData, entreCalle1: selected })); setIsEntreCalle1ListOpen(false); setEntreCalle1SearchTerm(""); };
+  const handleEntreCalle2Select = (selected) => { setFormData(prevData => ({ ...prevData, entreCalle2: selected })); setIsEntreCalle2ListOpen(false); setEntreCalle2SearchTerm(""); };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -183,19 +149,35 @@ export default function FormularioPeticion() {
         estatus: 'pendiente', 
       };
       
-      const addNewValueToCollection = async (collectionName, options, value) => {
+      const addNewValueToCollection = async (collectionName, value) => {
           const trimmedValue = value.trim();
-          if (trimmedValue && !options.some(opt => opt.toLowerCase() === trimmedValue.toLowerCase())) {
-              await addDoc(collection(db, collectionName), { nombre: trimmedValue });
+          if (!trimmedValue) return;
+          const q = query(collection(db, collectionName), where("nombre", "==", trimmedValue));
+          const querySnapshot = await getDocs(q);
+          if (querySnapshot.empty) {
+            await addDoc(collection(db, collectionName), { nombre: trimmedValue });
           }
       };
+      
+      const addNewCalleNumero = async (calle, numero) => {
+        const trimmedCalle = calle.trim();
+        const trimmedNumero = numero.trim();
+        if (!trimmedCalle || !trimmedNumero) return;
 
-      await addNewValueToCollection('localidades', localidadesOptions, formData.localidad);
-      await addNewValueToCollection('direcciones', direccionesOptions, formData.direccion);
-      await addNewValueToCollection('colonias', coloniasOptions, formData.colonia);
-      await addNewValueToCollection('calles', callesOptions, formData.calle);
-      await addNewValueToCollection('calles', callesOptions, formData.entreCalle1);
-      await addNewValueToCollection('calles', callesOptions, formData.entreCalle2);
+        const q = query(collection(db, "calleNumero"), where("calle", "==", trimmedCalle), where("numero", "==", trimmedNumero));
+        const querySnapshot = await getDocs(q);
+        if(querySnapshot.empty) {
+            await addDoc(collection(db, "calleNumero"), { calle: trimmedCalle, numero: trimmedNumero });
+        }
+      };
+      
+      await addNewValueToCollection('localidades', formData.localidad);
+      await addNewValueToCollection('direcciones', formData.direccion);
+      await addNewValueToCollection('colonias', formData.colonia);
+      await addNewValueToCollection('calles', formData.calle);
+      await addNewValueToCollection('calles', formData.entreCalle1);
+      await addNewValueToCollection('calles', formData.entreCalle2);
+      await addNewCalleNumero(formData.calle, formData.numeroExterior);
 
       await addDoc(collection(db, 'peticiones'), peticionParaGuardar);
       setMessage({ type: 'success', text: '¡Listo! el reporte se ha registrado exitosamente.' });
@@ -203,7 +185,7 @@ export default function FormularioPeticion() {
         nombres: '', apellidoPaterno: '', apellidoMaterno: '', telefono: '',
         localidad: '', direccion: '', estructura: 'no', origenReporte: '', peticion: '',
         hora: '', fechaReporte: getTodayDateString(),
-        colonia: '', calle: '', entreCalle1: '', entreCalle2: ''
+        colonia: '', calle: '', numeroExterior: '', entreCalle1: '', entreCalle2: ''
       });
       setIneFile(null); setIneFileName('');
     } catch (error) {
@@ -288,7 +270,7 @@ export default function FormularioPeticion() {
             </div>
           </div>
           
-          <div className="form-grid full-width-group">
+          <div className="form-grid-3-col full-width-group">
             <div className="form-group searchable-dropdown" ref={coloniaDropdownRef}>
               <label>Colonia o Fraccionamiento</label>
               <button type="button" className={`dropdown-toggle ${!formData.colonia ? 'placeholder' : ''}`} onClick={() => setIsColoniaListOpen(!isColoniaListOpen)}>
@@ -318,6 +300,10 @@ export default function FormularioPeticion() {
                   </div>
                 </div>
               )}
+            </div>
+            <div className="form-group">
+              <label htmlFor="numeroExterior">Número Ext.</label>
+              <input type="text" id="numeroExterior" name="numeroExterior" value={formData.numeroExterior} onChange={handleChange} className="form-input" />
             </div>
           </div>
           
