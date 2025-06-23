@@ -176,48 +176,47 @@ export default function FormularioPeticion() {
     }
   };
 
-  // --- FUNCIÓN MODIFICADA: Ahora para poblar CALLES ---
-  const handlePopulateCalles = async () => {
+  // --- FUNCIÓN MODIFICADA: Ahora para poblar DIRECCIONES ---
+  const handlePopulateDirecciones = async () => {
     setIsLoading(true);
     setPopulateMessage('');
 
-    const callesIniciales = [
-      "Hidalgo", "Juárez", "General Cepeda", "Centenario", "Blvd. Jesús Valdez Sánchez",
-      "Román Cepeda", "Carretera Antigua a Arteaga", "General Rodríguez Triana", "Olivos",
-      "Calle Números", "Calle San Mateo", "Calle N° 110", "Privada Lázaro Cárdenas",
-      "Calle Santiago Valdés Galindo", "Blvd. Eulogio Gutiérrez", "Carretera a Los Valdés",
-      "Camino a Los Pastores", "Privanza Acacia", "Alameda", "Naranjo",
-      "Carretera San Antonio de las Alazanas - Mesa de las Tablas"
+    const direccionesIniciales = [
+      "Comunicación social", "Tesorería Municipal", "Regidores", "Archivo Municipal", 
+      "Contraloría", "Oficialía mayor", "Dif Municipal", "Desarrollo Social", 
+      "Obras Publicas", "SIMAS ARTEAGA", "SERVICIOS PRIMARIOS", "Protección civil", 
+      "Seguridad Publica", "Salud", "Fomento económico", "Secretaria del Ayuntamiento", 
+      "Presidencia"
     ];
 
     try {
-      const callesCollection = collection(db, 'calles');
-      const querySnapshot = await getDocs(callesCollection);
-      const callesExistentes = new Set(querySnapshot.docs.map(doc => doc.data().nombre));
+      const direccionesCollection = collection(db, 'direcciones');
+      const querySnapshot = await getDocs(direccionesCollection);
+      const direccionesExistentes = new Set(querySnapshot.docs.map(doc => doc.data().nombre));
 
       const batch = writeBatch(db);
-      let callesAgregadas = 0;
+      let direccionesAgregadas = 0;
 
-      callesIniciales.forEach(nombre => {
-        if (!callesExistentes.has(nombre)) {
-          const newDocRef = doc(callesCollection);
+      direccionesIniciales.forEach(nombre => {
+        if (!direccionesExistentes.has(nombre)) {
+          const newDocRef = doc(direccionesCollection);
           batch.set(newDocRef, { nombre: nombre });
-          callesAgregadas++;
+          direccionesAgregadas++;
         }
       });
 
-      if (callesAgregadas > 0) {
+      if (direccionesAgregadas > 0) {
         await batch.commit();
-        setPopulateMessage(`¡Éxito! Se agregaron ${callesAgregadas} nuevas calles.`);
-        const updatedSnapshot = await getDocs(callesCollection);
+        setPopulateMessage(`¡Éxito! Se agregaron ${direccionesAgregadas} nuevas direcciones.`);
+        const updatedSnapshot = await getDocs(direccionesCollection);
         const updatedData = updatedSnapshot.docs.map(doc => doc.data().nombre).sort((a,b) => a.localeCompare(b));
-        setCallesOptions(updatedData);
+        setDireccionesOptions(updatedData);
       } else {
-        setPopulateMessage('La base de datos de calles ya está actualizada.');
+        setPopulateMessage('La base de datos de direcciones ya está actualizada.');
       }
     } catch (error) {
-      console.error("Error al poblar las calles: ", error);
-      setPopulateMessage('Error al intentar guardar las calles.');
+      console.error("Error al poblar las direcciones: ", error);
+      setPopulateMessage('Error al intentar guardar las direcciones.');
     } finally {
       setIsLoading(false);
     }
@@ -239,12 +238,168 @@ export default function FormularioPeticion() {
         </div>
 
         <form onSubmit={handleSubmit} className="peticion-form" autoComplete="off">
-          {/* ... (resto del formulario sin cambios hasta el botón temporal) ... */}
+          <div className="form-grid">
+            <div className="form-column">
+              <div className="form-group">
+                <label htmlFor="nombres">Nombre(s)*</label>
+                <input type="text" id="nombres" name="nombres" value={formData.nombres} onChange={handleChange} placeholder="Ej: Juan" required className="form-input" />
+              </div>
+              <div className="form-group">
+                <label htmlFor="apellidoPaterno">Apellido Paterno*</label>
+                <input type="text" id="apellidoPaterno" name="apellidoPaterno" value={formData.apellidoPaterno} onChange={handleChange} placeholder="Ej: Pérez" required className="form-input" />
+              </div>
+              <div className="form-group">
+                <label htmlFor="apellidoMaterno">Apellido Materno</label>
+                <input type="text" id="apellidoMaterno" name="apellidoMaterno" value={formData.apellidoMaterno} onChange={handleChange} placeholder="Ej: García" className="form-input" />
+              </div>
+              <div className="form-group">
+                <label htmlFor="telefono">Teléfono*</label>
+                <input type="tel" id="telefono" name="telefono" value={formData.telefono} onChange={handleChange} placeholder="Ej: 844 123 4567" required className="form-input" />
+              </div>
+            </div>
+
+            <div className="form-column">
+              <div className="form-group">
+                <label htmlFor="fechaReporte">Fecha del Reporte*</label>
+                <input type="date" id="fechaReporte" name="fechaReporte" value={formData.fechaReporte} onChange={handleChange} required className="form-input" />
+              </div>
+              <div className="form-group searchable-dropdown" ref={direccionDropdownRef}>
+                <label>Dirección a la que Pertenece*</label>
+                <button type="button" className={`dropdown-toggle ${!formData.direccion ? 'placeholder' : ''}`} onClick={() => setIsDireccionListOpen(!isDireccionListOpen)}>
+                  {formData.direccion || "Selecciona una dirección"}
+                </button>
+                {isDireccionListOpen && (
+                  <div className="suggestions-list">
+                    <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir dirección..." value={direccionSearchTerm} onChange={(e) => setDireccionSearchTerm(e.target.value)} autoFocus />
+                    <div className="suggestion-items-container">
+                      {filteredDirecciones.map(dir => ( <div key={dir} className="suggestion-item" onClick={() => handleDireccionSelect(dir)}>{dir}</div> ))}
+                      {filteredDirecciones.length === 0 && direccionSearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleDireccionSelect(direccionSearchTerm)}>Añadir nueva: "{direccionSearchTerm}"</div> )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="form-group searchable-dropdown" ref={localidadDropdownRef}>
+                <label>Localidad*</label>
+                <button type="button" className={`dropdown-toggle ${!formData.localidad ? 'placeholder' : ''}`} onClick={() => setIsLocalidadListOpen(!isLocalidadListOpen)}>
+                  {formData.localidad || "Selecciona una localidad"}
+                </button>
+                {isLocalidadListOpen && (
+                  <div className="suggestions-list">
+                    <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir localidad..." value={localidadSearchTerm} onChange={(e) => setLocalidadSearchTerm(e.target.value)} autoFocus />
+                    <div className="suggestion-items-container">
+                      {filteredLocalidades.map(loc => ( <div key={loc} className="suggestion-item" onClick={() => handleLocalidadSelect(loc)}>{loc}</div> ))}
+                      {filteredLocalidades.length === 0 && localidadSearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleLocalidadSelect(localidadSearchTerm)}>Añadir nueva: "{localidadSearchTerm}"</div> )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          <div className="form-grid full-width-group">
+            <div className="form-group searchable-dropdown" ref={coloniaDropdownRef}>
+              <label>Colonia o Fraccionamiento</label>
+              <button type="button" className={`dropdown-toggle ${!formData.colonia ? 'placeholder' : ''}`} onClick={() => setIsColoniaListOpen(!isColoniaListOpen)}>
+                {formData.colonia || "Selecciona una colonia"}
+              </button>
+              {isColoniaListOpen && (
+                <div className="suggestions-list">
+                  <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir..." value={coloniaSearchTerm} onChange={(e) => setColoniaSearchTerm(e.target.value)} autoFocus />
+                  <div className="suggestion-items-container">
+                    {filteredColonias.map(c => ( <div key={c} className="suggestion-item" onClick={() => handleColoniaSelect(c)}>{c}</div> ))}
+                    {filteredColonias.length === 0 && coloniaSearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleColoniaSelect(coloniaSearchTerm)}>Añadir nueva: "{coloniaSearchTerm}"</div> )}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="form-group searchable-dropdown" ref={calleDropdownRef}>
+              <label>Calle</label>
+              <button type="button" className={`dropdown-toggle ${!formData.calle ? 'placeholder' : ''}`} onClick={() => setIsCalleListOpen(!isCalleListOpen)}>
+                {formData.calle || "Selecciona una calle"}
+              </button>
+              {isCalleListOpen && (
+                <div className="suggestions-list">
+                  <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir..." value={calleSearchTerm} onChange={(e) => setCalleSearchTerm(e.target.value)} autoFocus />
+                  <div className="suggestion-items-container">
+                    {filteredCalles.map(c => ( <div key={c} className="suggestion-item" onClick={() => handleCalleSelect(c)}>{c}</div> ))}
+                    {filteredCalles.length === 0 && calleSearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleCalleSelect(calleSearchTerm)}>Añadir nueva: "{calleSearchTerm}"</div> )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <div className="full-width-group">
+              <label className="group-label">Ubicación (entre qué calles)</label>
+              <div className="form-grid">
+                <div className="form-group searchable-dropdown" ref={entreCalle1DropdownRef}>
+                    <label htmlFor="entreCalle1">Calle 1</label>
+                    <button type="button" className={`dropdown-toggle ${!formData.entreCalle1 ? 'placeholder' : ''}`} onClick={() => setIsEntreCalle1ListOpen(!isEntreCalle1ListOpen)}>
+                      {formData.entreCalle1 || "Selecciona una calle"}
+                    </button>
+                    {isEntreCalle1ListOpen && (
+                      <div className="suggestions-list">
+                        <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir..." value={entreCalle1SearchTerm} onChange={(e) => setEntreCalle1SearchTerm(e.target.value)} autoFocus />
+                        <div className="suggestion-items-container">
+                          {filteredEntreCalles1.map(c => ( <div key={c} className="suggestion-item" onClick={() => handleEntreCalle1Select(c)}>{c}</div> ))}
+                          {filteredEntreCalles1.length === 0 && entreCalle1SearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleEntreCalle1Select(entreCalle1SearchTerm)}>Añadir nueva: "{entreCalle1SearchTerm}"</div> )}
+                        </div>
+                      </div>
+                    )}
+                </div>
+                <div className="form-group searchable-dropdown" ref={entreCalle2DropdownRef}>
+                    <label htmlFor="entreCalle2">Calle 2</label>
+                    <button type="button" className={`dropdown-toggle ${!formData.entreCalle2 ? 'placeholder' : ''}`} onClick={() => setIsEntreCalle2ListOpen(!isEntreCalle2ListOpen)}>
+                      {formData.entreCalle2 || "Selecciona una calle"}
+                    </button>
+                    {isEntreCalle2ListOpen && (
+                      <div className="suggestions-list">
+                        <input type="text" className="suggestion-search-input" placeholder="Buscar o añadir..." value={entreCalle2SearchTerm} onChange={(e) => setEntreCalle2SearchTerm(e.target.value)} autoFocus />
+                        <div className="suggestion-items-container">
+                          {filteredEntreCalles2.map(c => ( <div key={c} className="suggestion-item" onClick={() => handleEntreCalle2Select(c)}>{c}</div> ))}
+                          {filteredEntreCalles2.length === 0 && entreCalle2SearchTerm && ( <div className="suggestion-item add-new" onClick={() => handleEntreCalle2Select(entreCalle2SearchTerm)}>Añadir nueva: "{entreCalle2SearchTerm}"</div> )}
+                        </div>
+                      </div>
+                    )}
+                </div>
+              </div>
+          </div>
+          
+          <div className="form-group full-width-group">
+            <label>¿Es referente a una Estructura?</label>
+            <div className="radio-group">
+              <label className="radio-label"><input type="radio" name="estructura" value="si" checked={formData.estructura === 'si'} onChange={handleChange} /> Sí</label>
+              <label className="radio-label"><input type="radio" name="estructura" value="no" checked={formData.estructura === 'no'} onChange={handleChange} /> No</label>
+            </div>
+          </div>
+
+          <div className="form-group full-width-group">
+            <label htmlFor="origenReporte">Origen del Reporte/Petición</label>
+            <select id="origenReporte" name="origenReporte" value={formData.origenReporte} onChange={handleChange} className="form-select">
+              <option value="">-- ¿Por que medio Reporto? --</option>
+              {['Red Social', 'WhatsApp', 'Recomendación', 'Otro'].map(origen => <option key={origen} value={origen}>{origen}</option>)}
+            </select>
+          </div>
+          
+          <div className="form-group full-width-group">
+             <label htmlFor="hora">Hora del Registro*</label>
+             <input type="time" id="hora" name="hora" value={formData.hora} onChange={handleChange} required className="form-input" />
+          </div>
+
+          <div className="form-group full-width-group">
+            <label htmlFor="peticion">Descripción del Reporte*</label>
+            <textarea id="peticion" name="peticion" value={formData.peticion} onChange={handleChange} placeholder="Detalla aquí la solicitud o reporte..." rows="4" required className="form-textarea" />
+          </div>
+          <div className="form-group full-width-group">
+            <label htmlFor="ineFile">Adjuntar INE/Identificación (Opcional)</label>
+            <input type="file" id="ineFile" name="ineFile" onChange={handleFileChange} accept="image/*,.pdf" className="form-file-input" />
+            {ineFileName && <p className="file-name-display">Archivo seleccionado: {ineFileName}</p>}
+          </div>
           
           <div className="admin-actions">
-            <p><strong>Herramienta de Administrador:</strong> Poblar la base de datos de calles.</p>
-            <button type="button" onClick={handlePopulateCalles} className="populate-button" disabled={isLoading}>
-              {isLoading ? 'Procesando...' : 'Poblar Calles (Solo una vez)'}
+            <p><strong>Herramienta de Administrador:</strong> Poblar la base de datos de direcciones.</p>
+            <button type="button" onClick={handlePopulateDirecciones} className="populate-button" disabled={isLoading}>
+              {isLoading ? 'Procesando...' : 'Poblar Direcciones (Solo una vez)'}
             </button>
             {populateMessage && <p className="populate-message">{populateMessage}</p>}
           </div>
