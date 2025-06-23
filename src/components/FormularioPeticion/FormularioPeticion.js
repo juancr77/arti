@@ -1,18 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
-// Importaciones de Firebase, incluyendo 'doc' y 'writeBatch'
+// Importaciones de Firebase desde tu archivo centralizado
 import { db, storage } from '../../services/firebase';
-import { collection, addDoc, serverTimestamp, getDocs, doc, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import './FormularioPeticion.css';
+import './FormularioPeticion.css'; // Importamos el CSS
 
+// --- Icono de Spinner (SVG simple) ---
 const SpinnerIcon = () => (
   <svg className="spinner-icon" viewBox="0 0 50 50">
     <circle className="path" cx="25" cy="25" r="20" fill="none" strokeWidth="5"></circle>
   </svg>
 );
 
+// --- Componente con el nombre correcto ---
 export default function FormularioPeticion() {
 
   const getTodayDateString = () => {
@@ -23,6 +25,7 @@ export default function FormularioPeticion() {
     return `${yyyy}-${mm}-${dd}`;
   };
   
+  // --- ESTADO DEL FORMULARIO ---
   const [formData, setFormData] = useState({
     nombres: '',
     apellidoPaterno: '',
@@ -44,8 +47,8 @@ export default function FormularioPeticion() {
   const [ineFileName, setIneFileName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
-  const [populateMessage, setPopulateMessage] = useState('');
   
+  // --- Estados y Refs para los Dropdowns ---
   const [localidadesOptions, setLocalidadesOptions] = useState([]);
   const [localidadSearchTerm, setLocalidadSearchTerm] = useState("");
   const [isLocalidadListOpen, setIsLocalidadListOpen] = useState(false);
@@ -62,16 +65,20 @@ export default function FormularioPeticion() {
   const coloniaDropdownRef = useRef(null);
 
   const [callesOptions, setCallesOptions] = useState([]);
+  
   const [calleSearchTerm, setCalleSearchTerm] = useState("");
   const [isCalleListOpen, setIsCalleListOpen] = useState(false);
   const calleDropdownRef = useRef(null);
+
   const [entreCalle1SearchTerm, setEntreCalle1SearchTerm] = useState("");
   const [isEntreCalle1ListOpen, setIsEntreCalle1ListOpen] = useState(false);
   const entreCalle1DropdownRef = useRef(null);
+
   const [entreCalle2SearchTerm, setEntreCalle2SearchTerm] = useState("");
   const [isEntreCalle2ListOpen, setIsEntreCalle2ListOpen] = useState(false);
   const entreCalle2DropdownRef = useRef(null);
   
+  // --- EFECTOS ---
   useEffect(() => {
     const fetchCollectionData = async (collectionName, setData) => {
         try {
@@ -82,6 +89,7 @@ export default function FormularioPeticion() {
             console.error(`Error cargando ${collectionName}: `, error);
         }
     };
+
     fetchCollectionData("localidades", setLocalidadesOptions);
     fetchCollectionData("direcciones", setDireccionesOptions);
     fetchCollectionData("calles", setCallesOptions);
@@ -103,6 +111,7 @@ export default function FormularioPeticion() {
       };
   }, []);
 
+  // --- MANEJADORES DE EVENTOS ---
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevData => ({ ...prevData, [name]: value }));
@@ -114,12 +123,41 @@ export default function FormularioPeticion() {
     else { setIneFile(null); setIneFileName(''); }
   };
   
-  const handleLocalidadSelect = (selected) => { setFormData(prevData => ({ ...prevData, localidad: selected })); setIsLocalidadListOpen(false); setLocalidadSearchTerm(""); };
-  const handleDireccionSelect = (selected) => { setFormData(prevData => ({ ...prevData, direccion: selected })); setIsDireccionListOpen(false); setDireccionSearchTerm(""); };
-  const handleColoniaSelect = (selected) => { setFormData(prevData => ({ ...prevData, colonia: selected })); setIsColoniaListOpen(false); setColoniaSearchTerm(""); };
-  const handleCalleSelect = (selected) => { setFormData(prevData => ({ ...prevData, calle: selected })); setIsCalleListOpen(false); setCalleSearchTerm(""); };
-  const handleEntreCalle1Select = (selected) => { setFormData(prevData => ({ ...prevData, entreCalle1: selected })); setIsEntreCalle1ListOpen(false); setEntreCalle1SearchTerm(""); };
-  const handleEntreCalle2Select = (selected) => { setFormData(prevData => ({ ...prevData, entreCalle2: selected })); setIsEntreCalle2ListOpen(false); setEntreCalle2SearchTerm(""); };
+  const handleLocalidadSelect = (selected) => {
+    setFormData(prevData => ({ ...prevData, localidad: selected }));
+    setIsLocalidadListOpen(false);
+    setLocalidadSearchTerm("");
+  };
+
+  const handleDireccionSelect = (selected) => {
+    setFormData(prevData => ({ ...prevData, direccion: selected }));
+    setIsDireccionListOpen(false);
+    setDireccionSearchTerm("");
+  };
+
+  const handleColoniaSelect = (selected) => {
+    setFormData(prevData => ({ ...prevData, colonia: selected }));
+    setIsColoniaListOpen(false);
+    setColoniaSearchTerm("");
+  };
+
+  const handleCalleSelect = (selected) => {
+    setFormData(prevData => ({ ...prevData, calle: selected }));
+    setIsCalleListOpen(false);
+    setCalleSearchTerm("");
+  };
+
+  const handleEntreCalle1Select = (selected) => {
+    setFormData(prevData => ({ ...prevData, entreCalle1: selected }));
+    setIsEntreCalle1ListOpen(false);
+    setEntreCalle1SearchTerm("");
+  };
+  
+  const handleEntreCalle2Select = (selected) => {
+    setFormData(prevData => ({ ...prevData, entreCalle2: selected }));
+    setIsEntreCalle2ListOpen(false);
+    setEntreCalle2SearchTerm("");
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -171,52 +209,6 @@ export default function FormularioPeticion() {
     } catch (error) {
       console.error("Error al registrar el Reporte: ", error);
       setMessage({ type: 'error', text: 'Ocurrió un error al registrar el reporte.' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // --- FUNCIÓN MODIFICADA: Ahora para poblar DIRECCIONES ---
-  const handlePopulateDirecciones = async () => {
-    setIsLoading(true);
-    setPopulateMessage('');
-
-    const direccionesIniciales = [
-      "Comunicación social", "Tesorería Municipal", "Regidores", "Archivo Municipal", 
-      "Contraloría", "Oficialía mayor", "Dif Municipal", "Desarrollo Social", 
-      "Obras Publicas", "SIMAS ARTEAGA", "SERVICIOS PRIMARIOS", "Protección civil", 
-      "Seguridad Publica", "Salud", "Fomento económico", "Secretaria del Ayuntamiento", 
-      "Presidencia"
-    ];
-
-    try {
-      const direccionesCollection = collection(db, 'direcciones');
-      const querySnapshot = await getDocs(direccionesCollection);
-      const direccionesExistentes = new Set(querySnapshot.docs.map(doc => doc.data().nombre));
-
-      const batch = writeBatch(db);
-      let direccionesAgregadas = 0;
-
-      direccionesIniciales.forEach(nombre => {
-        if (!direccionesExistentes.has(nombre)) {
-          const newDocRef = doc(direccionesCollection);
-          batch.set(newDocRef, { nombre: nombre });
-          direccionesAgregadas++;
-        }
-      });
-
-      if (direccionesAgregadas > 0) {
-        await batch.commit();
-        setPopulateMessage(`¡Éxito! Se agregaron ${direccionesAgregadas} nuevas direcciones.`);
-        const updatedSnapshot = await getDocs(direccionesCollection);
-        const updatedData = updatedSnapshot.docs.map(doc => doc.data().nombre).sort((a,b) => a.localeCompare(b));
-        setDireccionesOptions(updatedData);
-      } else {
-        setPopulateMessage('La base de datos de direcciones ya está actualizada.');
-      }
-    } catch (error) {
-      console.error("Error al poblar las direcciones: ", error);
-      setPopulateMessage('Error al intentar guardar las direcciones.');
     } finally {
       setIsLoading(false);
     }
@@ -395,15 +387,6 @@ export default function FormularioPeticion() {
             <input type="file" id="ineFile" name="ineFile" onChange={handleFileChange} accept="image/*,.pdf" className="form-file-input" />
             {ineFileName && <p className="file-name-display">Archivo seleccionado: {ineFileName}</p>}
           </div>
-          
-          <div className="admin-actions">
-            <p><strong>Herramienta de Administrador:</strong> Poblar la base de datos de direcciones.</p>
-            <button type="button" onClick={handlePopulateDirecciones} className="populate-button" disabled={isLoading}>
-              {isLoading ? 'Procesando...' : 'Poblar Direcciones (Solo una vez)'}
-            </button>
-            {populateMessage && <p className="populate-message">{populateMessage}</p>}
-          </div>
-
           <div className="form-actions">
             <button type="submit" disabled={isLoading} className="submit-button">
               {isLoading ? (<><SpinnerIcon />Enviando...</>) : ('Registrar Reporte')}
