@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
-// Importamos más funciones de Firestore
 import { db, storage } from '../../services/firebase';
 import { collection, addDoc, serverTimestamp, getDocs, query, where } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
@@ -62,15 +61,12 @@ export default function FormularioPeticion() {
   const coloniaDropdownRef = useRef(null);
 
   const [callesOptions, setCallesOptions] = useState([]);
-  
   const [calleSearchTerm, setCalleSearchTerm] = useState("");
   const [isCalleListOpen, setIsCalleListOpen] = useState(false);
   const calleDropdownRef = useRef(null);
-
   const [entreCalle1SearchTerm, setEntreCalle1SearchTerm] = useState("");
   const [isEntreCalle1ListOpen, setIsEntreCalle1ListOpen] = useState(false);
   const entreCalle1DropdownRef = useRef(null);
-
   const [entreCalle2SearchTerm, setEntreCalle2SearchTerm] = useState("");
   const [isEntreCalle2ListOpen, setIsEntreCalle2ListOpen] = useState(false);
   const entreCalle2DropdownRef = useRef(null);
@@ -85,7 +81,6 @@ export default function FormularioPeticion() {
             console.error(`Error cargando ${collectionName}: `, error);
         }
     };
-
     fetchCollectionData("localidades", setLocalidadesOptions);
     fetchCollectionData("direcciones", setDireccionesOptions);
     fetchCollectionData("calles", setCallesOptions);
@@ -165,15 +160,15 @@ export default function FormularioPeticion() {
       await addNewValueToCollection('calles', formData.calle);
       await addNewValueToCollection('calles', formData.entreCalle1);
       await addNewValueToCollection('calles', formData.entreCalle2);
-      await addNewValueToCollection('numExt', formData.numeroExterior); // Guardar el número exterior
+      await addNewValueToCollection('numExt', formData.numeroExterior);
 
       await addDoc(collection(db, 'peticiones'), peticionParaGuardar);
       setMessage({ type: 'success', text: '¡Listo! el reporte se ha registrado exitosamente.' });
       setFormData({
         nombres: '', apellidoPaterno: '', apellidoMaterno: '', telefono: '',
-        localidad: '', direccion: '', estructura: 'no', origenReporte: '', peticion: '',
-        hora: '', fechaReporte: getTodayDateString(),
-        colonia: '', calle: '', numeroExterior: '', entreCalle1: '', entreCalle2: ''
+        localidad: '', direccion: '', colonia: '', calle: '',
+        numeroExterior: '', entreCalle1: '', entreCalle2: '', estructura: 'no',
+        origenReporte: '', peticion: '', hora: '', fechaReporte: getTodayDateString(),
       });
       setIneFile(null); setIneFileName('');
     } catch (error) {
@@ -331,6 +326,20 @@ export default function FormularioPeticion() {
               </div>
           </div>
           
+          <div className="form-grid full-width-group">
+            <div className="form-group">
+                <label htmlFor="origenReporte">Origen del Reporte/Petición</label>
+                <select id="origenReporte" name="origenReporte" value={formData.origenReporte} onChange={handleChange} className="form-select">
+                  <option value="">-- ¿Por que medio Reporto? --</option>
+                  {['Red Social', 'WhatsApp', 'Recomendación', 'Otro'].map(origen => <option key={origen} value={origen}>{origen}</option>)}
+                </select>
+            </div>
+            <div className="form-group">
+               <label htmlFor="hora">Hora del Registro*</label>
+               <input type="time" id="hora" name="hora" value={formData.hora} onChange={handleChange} required className="form-input" />
+            </div>
+          </div>
+          
           <div className="form-group full-width-group">
             <label>¿Es referente a una Estructura?</label>
             <div className="radio-group">
@@ -338,20 +347,7 @@ export default function FormularioPeticion() {
               <label className="radio-label"><input type="radio" name="estructura" value="no" checked={formData.estructura === 'no'} onChange={handleChange} /> No</label>
             </div>
           </div>
-
-          <div className="form-group full-width-group">
-            <label htmlFor="origenReporte">Origen del Reporte/Petición</label>
-            <select id="origenReporte" name="origenReporte" value={formData.origenReporte} onChange={handleChange} className="form-select">
-              <option value="">-- ¿Por que medio Reporto? --</option>
-              {['Red Social', 'WhatsApp', 'Recomendación', 'Otro'].map(origen => <option key={origen} value={origen}>{origen}</option>)}
-            </select>
-          </div>
           
-          <div className="form-group full-width-group">
-             <label htmlFor="hora">Hora del Registro*</label>
-             <input type="time" id="hora" name="hora" value={formData.hora} onChange={handleChange} required className="form-input" />
-          </div>
-
           <div className="form-group full-width-group">
             <label htmlFor="peticion">Descripción del Reporte*</label>
             <textarea id="peticion" name="peticion" value={formData.peticion} onChange={handleChange} placeholder="Detalla aquí la solicitud o reporte..." rows="4" required className="form-textarea" />

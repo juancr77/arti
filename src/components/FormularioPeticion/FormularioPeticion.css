@@ -204,3 +204,47 @@
     font-size: 1.5rem;
   }
 }
+
+/* mi ana banana */
+
+/* ... (todos los estilos anteriores) ... */
+
+.full-width-group {
+  grid-column: 1 / -1;
+  margin-top: 1.5rem;
+}
+
+/* --- ESTILOS MODIFICADOS PARA EL CÓDIGO POSTAL --- */
+.zip-code-group {
+  margin-top: 1.5rem;
+}
+
+.zip-code-input-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  position: relative; /* Para posicionar el spinner */
+}
+
+.zip-code-input-wrapper .form-input {
+  flex-grow: 1;
+}
+
+/* El spinner ahora se posiciona dentro del input */
+.zip-code-input-wrapper .spinner-icon {
+  position: absolute;
+  right: 1rem;
+  width: 1.5em;
+  height: 1.5em;
+  color: #6c757d;
+}
+
+.zip-code-error {
+  color: #721c24;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+}
+
+
+.searchable-dropdown { position: relative; }
+/* ... (resto de tus estilos) ... */
