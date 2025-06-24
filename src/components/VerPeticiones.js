@@ -2,27 +2,32 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../services/firebase';
 import { collection, getDocs, doc, deleteDoc, updateDoc, query, orderBy } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext'; // <-- 1. Importamos el hook
-import './newcss/VerPeticiones.css'; 
+import { useAuth } from '../context/AuthContext';
+import './newcss/VerPeticiones.css';
 
 export default function VerPeticiones() {
-  // --- 2. Usamos el hook para obtener el estado del usuario ---
   const { currentUser } = useAuth();
 
   const [peticiones, setPeticiones] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [peticionesFiltradas, setPeticionesFiltradas] = useState([]);
   
+  // Estados para los filtros
   const [filtroEstatus, setFiltroEstatus] = useState('todos');
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
   const [filtroDireccion, setFiltroDireccion] = useState('todas');
+  const [filtroLocalidad, setFiltroLocalidad] = useState('todas'); // NUEVO ESTADO PARA FILTRO
+  
+  // Estados para las opciones de los filtros
   const [direccionesOptions, setDireccionesOptions] = useState([]);
+  const [localidadesOptions, setLocalidadesOptions] = useState([]); // NUEVO ESTADO PARA OPCIONES
 
+  // Estados para el modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [peticionActual, setPeticionActual] = useState(null);
   const [nuevoEstatus, setNuevoEstatus] = useState('');
 
-  // El resto de la lógica de carga y filtrado no cambia
+  // Carga inicial de datos
   useEffect(() => {
     const fetchPeticiones = async () => {
       try {
@@ -36,26 +41,34 @@ export default function VerPeticiones() {
         setIsLoading(false);
       }
     };
-    const fetchDirecciones = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "direcciones"));
-        const data = querySnapshot.docs.map(doc => doc.data().nombre).sort();
-        setDireccionesOptions(data);
-      } catch (error) {
-        console.error("Error cargando direcciones: ", error);
-      }
+
+    const fetchFilterOptions = async (collectionName, setOptions) => {
+        try {
+            const querySnapshot = await getDocs(collection(db, collectionName));
+            const data = querySnapshot.docs.map(doc => doc.data().nombre).sort();
+            setOptions(data);
+        } catch (error) {
+            console.error(`Error cargando ${collectionName}:`, error);
+        }
     };
+
     fetchPeticiones();
-    fetchDirecciones();
+    fetchFilterOptions("direcciones", setDireccionesOptions);
+    fetchFilterOptions("localidades", setLocalidadesOptions); // Cargamos las localidades
   }, []);
 
+  // Lógica de filtrado
   useEffect(() => {
     let resultado = peticiones;
+
     if (filtroEstatus !== 'todos') {
       resultado = resultado.filter(p => p.estatus === filtroEstatus);
     }
     if (filtroDireccion !== 'todas') {
       resultado = resultado.filter(p => p.direccion === filtroDireccion);
+    }
+    if (filtroLocalidad !== 'todas') { // LÓGICA DEL NUEVO FILTRO
+      resultado = resultado.filter(p => p.localidad === filtroLocalidad);
     }
     if (terminoBusqueda) {
       resultado = resultado.filter(p => {
@@ -63,8 +76,9 @@ export default function VerPeticiones() {
         return nombreCompleto.includes(terminoBusqueda.toLowerCase());
       });
     }
+
     setPeticionesFiltradas(resultado);
-  }, [peticiones, filtroEstatus, filtroDireccion, terminoBusqueda]);
+  }, [peticiones, filtroEstatus, filtroDireccion, filtroLocalidad, terminoBusqueda]); // Añadimos la dependencia
 
   const abrirModalEdicion = (peticion) => {
     setPeticionActual(peticion);
@@ -75,10 +89,15 @@ export default function VerPeticiones() {
   const handleUpdateStatus = async (e) => {
     e.preventDefault();
     if (!peticionActual) return;
+    
     const peticionDocRef = doc(db, 'peticiones', peticionActual.id);
     try {
       await updateDoc(peticionDocRef, { estatus: nuevoEstatus });
-      setPeticiones(peticiones.map(p => p.id === peticionActual.id ? { ...p, estatus: nuevoEstatus } : p));
+      
+      setPeticiones(peticiones.map(p => 
+        p.id === peticionActual.id ? { ...p, estatus: nuevoEstatus } : p
+      ));
+      
       setIsModalOpen(false);
       setPeticionActual(null);
       alert("Estatus actualizado con éxito.");
@@ -117,6 +136,15 @@ export default function VerPeticiones() {
                 <option key={dir} value={dir}>{dir}</option>
               ))}
             </select>
+
+            {/* --- NUEVO FILTRO DE LOCALIDAD --- */}
+            <select value={filtroLocalidad} onChange={e => setFiltroLocalidad(e.target.value)}>
+              <option value="todas">Todas las Localidades</option>
+              {localidadesOptions.map(loc => (
+                <option key={loc} value={loc}>{loc}</option>
+              ))}
+            </select>
+
             <input 
               type="text"
               placeholder="Buscar por nombre o apellido..."
@@ -139,12 +167,11 @@ export default function VerPeticiones() {
               {p.ineURL && (
                 <div className="image-frame">
                     <a href={p.ineURL} target="_blank" rel="noopener noreferrer">
-                        <img src={p.ineURL} alt={`Identificación de ${p.nombres}`} className="peticion-image" />
+                        <img src={p.ineURL} alt={`Identificación de ${p.nombres}`} className="peticion-image-inner" />
                     </a>
                 </div>
               )}
               <div className="card-actions">
-                {/* --- 3. Botón de Editar Estatus protegido --- */}
                 {currentUser && (
                   <button onClick={() => abrirModalEdicion(p)} className="action-button edit-button">Editar Estatus</button>
                 )}
@@ -184,7 +211,6 @@ export default function VerPeticiones() {
               </div>
               <div className="modal-actions">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="action-button cancel-button">Cancelar</button>
-                {/* --- 4. Botón de Guardar en Modal también protegido --- */}
                 {currentUser && (
                   <button type="submit" className="action-button edit-button">Guardar Cambios</button>
                 )}
