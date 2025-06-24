@@ -96,16 +96,19 @@ export default function Dashboard() {
       console.error("No se pudo cargar la imagen del logo para el Excel:", error);
     }
     
-    worksheet.mergeCells('C1:J4');
+    // El título ahora abarca hasta la columna K
+    worksheet.mergeCells('C1:K4');
     const titleCell = worksheet.getCell('C1');
     titleCell.value = 'Bienvenido(a) al sistema de reportes Arti';
     titleCell.font = { name: 'Arial Black', size: 18, bold: true, color: { argb: 'FF333333' } };
     titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
     
     worksheet.addRow([]);
+    
+    // --- ENCABEZADOS DE LA TABLA ACTUALIZADOS ---
     const headers = [
       'Nombre Completo', 'Teléfono', 'Fecha', 'Hora', 'Estatus', 
-      'Dirección', 'Localidad', 'Origen', 'Petición Completa', 'Enlace a Imagen'
+      'Dirección Asignada', 'Localidad', 'Ubicación', 'Origen', 'Petición Completa', 'Enlace a Imagen'
     ];
     const headerRow = worksheet.getRow(6);
     headerRow.values = headers;
@@ -114,41 +117,55 @@ export default function Dashboard() {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E7D32' } };
       cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
       cell.alignment = { vertical: 'middle', horizontal: 'center', wrapText: true };
-      cell.border = {
-        top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
-      };
+      cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
     });
     
-    worksheet.getColumn('A').width = 30;
-    worksheet.getColumn('B').width = 15;
-    worksheet.getColumn('C').width = 12;
+    // Anchos de columna ajustados
+    worksheet.getColumn('A').width = 25;
+    worksheet.getColumn('B').width = 14;
+    worksheet.getColumn('C').width = 11;
     worksheet.getColumn('D').width = 10;
-    worksheet.getColumn('E').width = 15;
-    worksheet.getColumn('F').width = 25;
-    worksheet.getColumn('G').width = 25;
-    worksheet.getColumn('H').width = 15;
-    worksheet.getColumn('I').width = 50;
-    worksheet.getColumn('J').width = 20;
+    worksheet.getColumn('E').width = 14;
+    worksheet.getColumn('F').width = 22;
+    worksheet.getColumn('G').width = 22;
+    worksheet.getColumn('H').width = 45; // Nueva columna Ubicación
+    worksheet.getColumn('I').width = 15;
+    worksheet.getColumn('J').width = 50;
+    worksheet.getColumn('K').width = 20;
     
-    const formattedData = dataToExport.map(reporte => ([
-      `${reporte.nombres || ''} ${reporte.apellidoPaterno || ''} ${reporte.apellidoMaterno || ''}`,
-      reporte.telefono,
-      reporte.fecha ? new Date(reporte.fecha.seconds * 1000).toLocaleDateString() : 'N/A',
-      reporte.hora || 'N/A',
-      reporte.estatus,
-      reporte.direccion,
-      reporte.localidad,
-      reporte.origenReporte,
-      reporte.peticion,
-      reporte.ineURL ? { text: 'Ver Imagen', hyperlink: reporte.ineURL } : 'No adjunta'
-    ]));
+    // --- DATOS FORMATEADOS CON LA NUEVA COLUMNA ---
+    const formattedData = dataToExport.map(reporte => {
+        const calleYNumero = [reporte.calle, reporte.numeroExterior].filter(Boolean).join(' ');
+        const colonia = reporte.colonia ? `Col. ${reporte.colonia}` : '';
+        const entreCalles = (reporte.entreCalle1 && reporte.entreCalle2) 
+          ? `entre calles: "${reporte.entreCalle1}" y "${reporte.entreCalle2}"` 
+          : (reporte.entreCalle1 ? `cerca de ${reporte.entreCalle1}` : ''); // Maneja el caso de una sola calle de referencia
+        
+        const ubicacionCompleta = [calleYNumero, colonia, entreCalles].filter(Boolean).join(', ');
+
+        return [
+          `${reporte.nombres || ''} ${reporte.apellidoPaterno || ''} ${reporte.apellidoMaterno || ''}`,
+          reporte.telefono,
+          reporte.fecha ? new Date(reporte.fecha.seconds * 1000).toLocaleDateString() : 'N/A',
+          reporte.hora || 'N/A',
+          reporte.estatus,
+          reporte.direccion,
+          reporte.localidad,
+          ubicacionCompleta, // Añadimos la nueva celda con la dirección completa
+          reporte.origenReporte,
+          reporte.peticion,
+          reporte.ineURL ? { text: 'Ver Imagen', hyperlink: reporte.ineURL } : 'No adjunta'
+        ]
+    });
     worksheet.addRows(formattedData);
 
+    // Aplicar estilos a las celdas de datos
     worksheet.eachRow({ includeEmpty: false }, function (row, rowNumber) {
       if (rowNumber > 6) {
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
             cell.alignment = { wrapText: true, vertical: 'top', horizontal: 'left' };
             cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+            // Centramos las columnas cortas
             if(['B','C','D','E'].includes(worksheet.getColumn(colNumber).letter)) {
               cell.alignment.horizontal = 'center';
             }
@@ -166,12 +183,10 @@ export default function Dashboard() {
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    saveAs(blob, 'ReportesDashboard.xlsx');
+    saveAs(blob, 'Reportes_Arti.xlsx');
   };
 
-  // --- COMPONENTE INTERNO MODIFICADO ---
   const ReporteCard = ({ reporte }) => {
-    // Formateamos la dirección física con el nuevo orden
     const calleYNumero = [reporte.calle, reporte.numeroExterior].filter(Boolean).join(' ');
     const colonia = reporte.colonia ? `Col. ${reporte.colonia}` : '';
     const direccionCompleta = [calleYNumero, colonia].filter(Boolean).join(', ');
