@@ -89,7 +89,6 @@
   font-size: 0.8rem;
 }
 
-/* Colores de estatus */
 .estatus-pendiente { background-color: #ef5350; }
 .estatus-en\.proceso { background-color: #ffab40; }
 .estatus-resuelta { background-color: #66bb6a; }
@@ -105,32 +104,28 @@
   color: #333; 
 }
 
-/* --- REGLAS CORREGIDAS --- */
-/* 1. El marco ahora ocupa el 100% del ancho y tiene una altura fija */
+/* --- REGLAS CORREGIDAS PARA LA IMAGEN --- */
 .image-frame {
   width: 100%;
   height: 200px;
-  margin: 1rem auto;
-  padding: 0.3rem; /* Borde más delgado */
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  margin-top: 1.5rem;
+  margin-bottom: 1rem;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-sizing: border-box; /* Importante para que el padding y borde no afecten el tamaño */
+  overflow: hidden;
+  background-color: #f8f9fa; /* Un fondo muy sutil para el área del marco */
+  border-radius: 8px; /* Bordes redondeados para el contenedor */
 }
 
-/* 2. La imagen se ajusta DENTRO del nuevo marco sin cambiar */
 .peticion-image-inner {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  /* La imagen ya no tiene bordes ni padding propios */
   border: none;
   padding: 0;
   box-shadow: none;
-  background-color: transparent;
 }
 
 

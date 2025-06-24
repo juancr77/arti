@@ -12,22 +12,18 @@ export default function VerPeticiones() {
   const [isLoading, setIsLoading] = useState(true);
   const [peticionesFiltradas, setPeticionesFiltradas] = useState([]);
   
-  // Estados para los filtros
   const [filtroEstatus, setFiltroEstatus] = useState('todos');
   const [terminoBusqueda, setTerminoBusqueda] = useState('');
   const [filtroDireccion, setFiltroDireccion] = useState('todas');
-  const [filtroLocalidad, setFiltroLocalidad] = useState('todas'); // NUEVO ESTADO PARA FILTRO
+  const [filtroLocalidad, setFiltroLocalidad] = useState('todas');
   
-  // Estados para las opciones de los filtros
   const [direccionesOptions, setDireccionesOptions] = useState([]);
-  const [localidadesOptions, setLocalidadesOptions] = useState([]); // NUEVO ESTADO PARA OPCIONES
+  const [localidadesOptions, setLocalidadesOptions] = useState([]);
 
-  // Estados para el modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [peticionActual, setPeticionActual] = useState(null);
   const [nuevoEstatus, setNuevoEstatus] = useState('');
 
-  // Carga inicial de datos
   useEffect(() => {
     const fetchPeticiones = async () => {
       try {
@@ -54,10 +50,9 @@ export default function VerPeticiones() {
 
     fetchPeticiones();
     fetchFilterOptions("direcciones", setDireccionesOptions);
-    fetchFilterOptions("localidades", setLocalidadesOptions); // Cargamos las localidades
+    fetchFilterOptions("localidades", setLocalidadesOptions);
   }, []);
 
-  // Lógica de filtrado
   useEffect(() => {
     let resultado = peticiones;
 
@@ -67,7 +62,7 @@ export default function VerPeticiones() {
     if (filtroDireccion !== 'todas') {
       resultado = resultado.filter(p => p.direccion === filtroDireccion);
     }
-    if (filtroLocalidad !== 'todas') { // LÓGICA DEL NUEVO FILTRO
+    if (filtroLocalidad !== 'todas') {
       resultado = resultado.filter(p => p.localidad === filtroLocalidad);
     }
     if (terminoBusqueda) {
@@ -78,7 +73,7 @@ export default function VerPeticiones() {
     }
 
     setPeticionesFiltradas(resultado);
-  }, [peticiones, filtroEstatus, filtroDireccion, filtroLocalidad, terminoBusqueda]); // Añadimos la dependencia
+  }, [peticiones, filtroEstatus, filtroDireccion, filtroLocalidad, terminoBusqueda]);
 
   const abrirModalEdicion = (peticion) => {
     setPeticionActual(peticion);
@@ -136,15 +131,12 @@ export default function VerPeticiones() {
                 <option key={dir} value={dir}>{dir}</option>
               ))}
             </select>
-
-            {/* --- NUEVO FILTRO DE LOCALIDAD --- */}
             <select value={filtroLocalidad} onChange={e => setFiltroLocalidad(e.target.value)}>
               <option value="todas">Todas las Localidades</option>
               {localidadesOptions.map(loc => (
                 <option key={loc} value={loc}>{loc}</option>
               ))}
             </select>
-
             <input 
               type="text"
               placeholder="Buscar por nombre o apellido..."
