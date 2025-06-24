@@ -69,7 +69,6 @@ export default function Dashboard() {
     setResueltas(resueltasArr);
   }, [allPeticiones, filtroDireccion]);
 
-  // --- FUNCIÓN DE EXPORTACIÓN RESTAURADA Y COMPLETA ---
   const handleExportToExcel = async () => {
     const dataToExport = [...pendientes, ...enProceso, ...resueltas];
     if (dataToExport.length === 0) {
@@ -81,7 +80,7 @@ export default function Dashboard() {
     const worksheet = workbook.addWorksheet("Reportes");
 
     worksheet.pageSetup = {
-      paperSize: 9, 
+      paperSize: 9,
       orientation: 'landscape',
       fitToPage: true,
       fitToWidth: 1,
@@ -94,12 +93,12 @@ export default function Dashboard() {
       const imageId = workbook.addImage({ buffer: imageBuffer, extension: 'png' });
       worksheet.addImage(imageId, 'A1:B4');
     } catch (error) {
-        console.error("No se pudo cargar la imagen del logo para el Excel:", error);
+      console.error("No se pudo cargar la imagen del logo para el Excel:", error);
     }
     
     worksheet.mergeCells('C1:J4');
     const titleCell = worksheet.getCell('C1');
-    titleCell.value = 'Reporte General del Sistema Arti';
+    titleCell.value = 'Bienvenido(a) al sistema de reportes Arti';
     titleCell.font = { name: 'Arial Black', size: 18, bold: true, color: { argb: 'FF333333' } };
     titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
     
@@ -108,8 +107,9 @@ export default function Dashboard() {
       'Nombre Completo', 'Teléfono', 'Fecha', 'Hora', 'Estatus', 
       'Dirección', 'Localidad', 'Origen', 'Petición Completa', 'Enlace a Imagen'
     ];
-    const headerRow = worksheet.addRow(headers);
-
+    const headerRow = worksheet.getRow(6);
+    headerRow.values = headers;
+    
     headerRow.eachCell((cell) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E7D32' } };
       cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
@@ -169,12 +169,12 @@ export default function Dashboard() {
     saveAs(blob, 'ReportesDashboard.xlsx');
   };
 
+  // --- COMPONENTE INTERNO MODIFICADO ---
   const ReporteCard = ({ reporte }) => {
-    const direccionCompleta = [
-      reporte.calle,
-      reporte.numeroExterior,
-      reporte.colonia,
-    ].filter(Boolean).join(', ');
+    // Formateamos la dirección física con el nuevo orden
+    const calleYNumero = [reporte.calle, reporte.numeroExterior].filter(Boolean).join(' ');
+    const colonia = reporte.colonia ? `Col. ${reporte.colonia}` : '';
+    const direccionCompleta = [calleYNumero, colonia].filter(Boolean).join(', ');
 
     return (
       <Link to={`/reporte/${reporte.id}`} className="dashboard-card">
