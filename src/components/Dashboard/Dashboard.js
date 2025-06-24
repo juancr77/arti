@@ -69,6 +69,7 @@ export default function Dashboard() {
     setResueltas(resueltasArr);
   }, [allPeticiones, filtroDireccion]);
 
+  // --- FUNCIÓN DE EXPORTACIÓN RESTAURADA Y COMPLETA ---
   const handleExportToExcel = async () => {
     const dataToExport = [...pendientes, ...enProceso, ...resueltas];
     if (dataToExport.length === 0) {
@@ -79,45 +80,36 @@ export default function Dashboard() {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Reportes");
 
-    // --- NUEVO: CONFIGURACIÓN DE PÁGINA PARA IMPRESIÓN ---
     worksheet.pageSetup = {
-      paperSize: 9, // 9 = Letter
+      paperSize: 9, 
       orientation: 'landscape',
       fitToPage: true,
       fitToWidth: 1,
-      fitToHeight: 0 // Permite que se extienda a varias páginas de alto
+      fitToHeight: 0
     };
 
-    // Logo
     try {
       const response = await fetch('https://i.imgur.com/5mavo8r.png');
       const imageBuffer = await response.arrayBuffer();
       const imageId = workbook.addImage({ buffer: imageBuffer, extension: 'png' });
       worksheet.addImage(imageId, 'A1:B4');
     } catch (error) {
-      console.error("No se pudo cargar la imagen del logo para el Excel:", error);
+        console.error("No se pudo cargar la imagen del logo para el Excel:", error);
     }
     
-    // Título Principal
     worksheet.mergeCells('C1:J4');
     const titleCell = worksheet.getCell('C1');
     titleCell.value = 'Reporte General del Sistema Arti';
     titleCell.font = { name: 'Arial Black', size: 18, bold: true, color: { argb: 'FF333333' } };
     titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
     
-    // Fila vacía para espaciar
     worksheet.addRow([]);
-
-    // --- CORRECCIÓN: CONSTRUIR LA FILA DE ENCABEZADOS MANUALMENTE ---
     const headers = [
       'Nombre Completo', 'Teléfono', 'Fecha', 'Hora', 'Estatus', 
       'Dirección', 'Localidad', 'Origen', 'Petición Completa', 'Enlace a Imagen'
     ];
-    // Se obtiene la fila 6 y se le asignan los valores
-    const headerRow = worksheet.getRow(6);
-    headerRow.values = headers;
-    
-    // Estilo para la fila de encabezados
+    const headerRow = worksheet.addRow(headers);
+
     headerRow.eachCell((cell) => {
       cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF2E7D32' } };
       cell.font = { color: { argb: 'FFFFFFFF' }, bold: true };
@@ -127,19 +119,17 @@ export default function Dashboard() {
       };
     });
     
-    // Anchos de columna fijos
-    worksheet.getColumn('A').width = 30; // Nombre
-    worksheet.getColumn('B').width = 15; // Telefono
-    worksheet.getColumn('C').width = 12; // Fecha
-    worksheet.getColumn('D').width = 10; // Hora
-    worksheet.getColumn('E').width = 15; // Estatus
-    worksheet.getColumn('F').width = 25; // Dirección
-    worksheet.getColumn('G').width = 25; // Localidad
-    worksheet.getColumn('H').width = 15; // Origen
-    worksheet.getColumn('I').width = 50; // Petición
-    worksheet.getColumn('J').width = 20; // Enlace
+    worksheet.getColumn('A').width = 30;
+    worksheet.getColumn('B').width = 15;
+    worksheet.getColumn('C').width = 12;
+    worksheet.getColumn('D').width = 10;
+    worksheet.getColumn('E').width = 15;
+    worksheet.getColumn('F').width = 25;
+    worksheet.getColumn('G').width = 25;
+    worksheet.getColumn('H').width = 15;
+    worksheet.getColumn('I').width = 50;
+    worksheet.getColumn('J').width = 20;
     
-    // Añadir los datos
     const formattedData = dataToExport.map(reporte => ([
       `${reporte.nombres || ''} ${reporte.apellidoPaterno || ''} ${reporte.apellidoMaterno || ''}`,
       reporte.telefono,
@@ -154,20 +144,15 @@ export default function Dashboard() {
     ]));
     worksheet.addRows(formattedData);
 
-    // Aplicar estilos a las celdas de datos
     worksheet.eachRow({ includeEmpty: false }, function (row, rowNumber) {
-      if (rowNumber > 6) { // La data empieza en la fila 7
+      if (rowNumber > 6) {
         row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-          cell.alignment = { wrapText: true, vertical: 'top', horizontal: 'left' };
-          cell.border = {
-            top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' }
-          };
-          // Centrar texto en columnas específicas
-          if(['B','C','D','E'].includes(worksheet.getColumn(colNumber).letter)) {
-            cell.alignment.horizontal = 'center';
-          }
+            cell.alignment = { wrapText: true, vertical: 'top', horizontal: 'left' };
+            cell.border = { top: { style: 'thin' }, left: { style: 'thin' }, bottom: { style: 'thin' }, right: { style: 'thin' } };
+            if(['B','C','D','E'].includes(worksheet.getColumn(colNumber).letter)) {
+              cell.alignment.horizontal = 'center';
+            }
         });
-
         const statusCell = row.getCell('E');
         if (statusCell.value) {
             let fillColor = 'FFFFFFFF';
@@ -179,22 +164,40 @@ export default function Dashboard() {
       }
     });
 
-    // Generar y descargar el archivo
     const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.sheet' });
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
     saveAs(blob, 'ReportesDashboard.xlsx');
   };
 
-  const ReporteCard = ({ reporte }) => (
-    <Link to={`/reporte/${reporte.id}`} className="dashboard-card">
-      <h4>{reporte.nombres} {reporte.apellidoPaterno}</h4>
-      {reporte.direccion && <div className="card-direction">{reporte.direccion}</div>}
-      <p>{reporte.peticion.substring(0, 80)}{reporte.peticion.length > 80 ? '...' : ''}</p>
-      <div className="card-footer">
-        <span>{reporte.fecha ? new Date(reporte.fecha.seconds * 1000).toLocaleString() : 'Sin fecha'}</span>
-      </div>
-    </Link>
-  );
+  const ReporteCard = ({ reporte }) => {
+    const direccionCompleta = [
+      reporte.calle,
+      reporte.numeroExterior,
+      reporte.colonia,
+    ].filter(Boolean).join(', ');
+
+    return (
+      <Link to={`/reporte/${reporte.id}`} className="dashboard-card">
+        <h4>{reporte.nombres} {reporte.apellidoPaterno}</h4>
+        
+        {reporte.direccion && <div className="card-department">{reporte.direccion}</div>}
+        
+        {direccionCompleta && (
+          <div className="card-address-block">
+              <p className="card-address-title">Dirección Física:</p>
+              <p className="card-address-content">{direccionCompleta}</p>
+          </div>
+        )}
+
+        <p className="card-petition-title">Petición:</p>
+        <p>{reporte.peticion.substring(0, 80)}{reporte.peticion.length > 80 ? '...' : ''}</p>
+        
+        <div className="card-footer">
+          <span>{reporte.fecha ? new Date(reporte.fecha.seconds * 1000).toLocaleString() : 'Sin fecha'}</span>
+        </div>
+      </Link>
+    );
+  };
 
   if (isLoading) {
     return <div className="loading-container">Cargando Dashboard...</div>;
